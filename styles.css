@@ -1,23 +1,24 @@
 :root {
-  --bg: #eef1f4;
-  --sidebar: #f7f8fa;
-  --surface: #ffffff;
-  --line: #d9dee5;
-  --line-soft: #e8ebef;
-  --text: #1f2937;
-  --muted: #6b7280;
-  --muted-strong: #4b5563;
-  --accent: #0f766e;
-  --accent-hover: #115e59;
-  --accent-soft: #e3f1ef;
-  --danger: #b42318;
-  --danger-soft: #fbe8e6;
-  --pin: #b7791f;
-  --hover: #eef1f4;
-  --code-bg: #f4f0e6;
-  --code-color: #9a3412;
-  --pre-bg: #202733;
-  --pre-color: #e5e7eb;
+  --bg: #f2eee3;
+  --sidebar: #eee8d9;
+  --surface: #fffdf7;
+  --editor-bg: #f9f0dd;
+  --line: #d9cfb8;
+  --line-soft: #e7ddc8;
+  --text: #29251e;
+  --muted: #756b5a;
+  --muted-strong: #4f4739;
+  --accent: #7c5e2f;
+  --accent-hover: #684b1f;
+  --accent-soft: rgba(124, 94, 47, 0.16);
+  --danger: #a13c2d;
+  --danger-soft: #f5ddd7;
+  --pin: #a8772d;
+  --hover: #f1ebdd;
+  --code-bg: #f1ead9;
+  --code-color: #8a4b1d;
+  --pre-bg: #2d2a24;
+  --pre-color: #f7f1e3;
   --sidebar-width: 340px;
   --resizer-width: 6px;
   --stack-top-height: 45vh;
@@ -27,25 +28,26 @@
 }
 
 [data-theme="dark"] {
-  --bg: #000000;
-  --sidebar: #1c1c1e;
-  --surface: #1c1c1e;
-  --line: #38383a;
-  --line-soft: #2c2c2e;
-  --text: #f2f2f7;
-  --muted: #8e8e93;
-  --muted-strong: #aeaeb2;
-  --accent: #0a84ff;
-  --accent-hover: #409cff;
-  --accent-soft: rgba(10, 132, 255, 0.2);
-  --danger: #ff453a;
-  --danger-soft: rgba(255, 69, 58, 0.18);
-  --pin: #ffd60a;
-  --hover: #2c2c2e;
-  --code-bg: #2c2c2e;
-  --code-color: #ff9f0a;
-  --pre-bg: #000000;
-  --pre-color: #f2f2f7;
+  --bg: #0e1020;
+  --sidebar: #151730;
+  --surface: #181a35;
+  --editor-bg: #181a35;
+  --line: #32365c;
+  --line-soft: #272a48;
+  --text: #e7e6f4;
+  --muted: #9493b2;
+  --muted-strong: #b3b2cf;
+  --accent: #8b7cf6;
+  --accent-hover: #a294ff;
+  --accent-soft: rgba(139, 124, 246, 0.24);
+  --danger: #f26d78;
+  --danger-soft: rgba(242, 109, 120, 0.16);
+  --pin: #b9a5ff;
+  --hover: #202344;
+  --code-bg: #222544;
+  --code-color: #c4b5fd;
+  --pre-bg: #0b0d1c;
+  --pre-color: #e7e6f4;
   --shadow: 0 8px 24px rgba(0, 0, 0, 0.32);
   color-scheme: dark;
 }
@@ -413,7 +415,12 @@ button {
   min-width: 0;
   height: 100vh;
   overflow: hidden;
-  background: var(--surface);
+  background: var(--editor-bg);
+  box-shadow: inset 8px 0 18px rgba(97, 68, 22, 0.07);
+}
+
+[data-theme="dark"] .editor-pane {
+  box-shadow: none;
 }
 
 .editor-empty {
