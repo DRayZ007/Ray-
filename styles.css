@@ -229,6 +229,320 @@ button {
   box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.12);
 }
 
+.folder-section {
+  flex: 0 0 auto;
+  max-height: 38%;
+  padding: 0 18px 10px;
+}
+
+.folder-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 30px;
+  margin-bottom: 5px;
+}
+
+.folder-heading h2 {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.folder-list {
+  min-height: 0;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+.folder-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 34px;
+  padding: 2px 0;
+  border-radius: 7px;
+}
+
+.folder-item:hover,
+.folder-item.is-active {
+  background: var(--hover);
+}
+
+.folder-item.is-active {
+  color: var(--accent);
+}
+
+.folder-select {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  gap: 8px;
+  height: 100%;
+  padding: 0 8px;
+  color: inherit;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  outline: none;
+  cursor: pointer;
+}
+
+.folder-toggle {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 20px;
+  height: 26px;
+  padding: 0;
+  color: var(--muted);
+  background: transparent;
+  border: 0;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.folder-toggle:hover {
+  color: var(--text);
+  background: var(--line-soft);
+}
+
+.folder-toggle.is-empty {
+  visibility: hidden;
+}
+
+.folder-toggle .icon {
+  width: 14px;
+  height: 14px;
+  transition: transform 0.15s ease;
+}
+
+.folder-toggle.is-expanded .icon {
+  transform: rotate(90deg);
+}
+
+.folder-select:focus-visible {
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+
+.folder-name,
+.folder-rename-input {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.folder-rename-input {
+  height: 28px;
+  padding: 0 7px;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--accent);
+  border-radius: 5px;
+  outline: none;
+}
+
+.folder-count {
+  flex: none;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.folder-actions {
+  display: none;
+  align-items: center;
+  gap: 1px;
+  padding-right: 4px;
+}
+
+.folder-item:hover .folder-actions {
+  display: flex;
+}
+
+.folder-action {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  color: var(--muted);
+  background: transparent;
+  border: 0;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.folder-action:hover {
+  color: var(--text);
+  background: var(--line-soft);
+}
+
+.folder-action.danger:hover {
+  color: var(--danger);
+  background: var(--danger-soft);
+}
+
+.new-folder-form {
+  display: flex;
+  gap: 6px;
+  margin-top: 7px;
+}
+
+.new-folder-input {
+  flex: 1;
+  min-width: 0;
+  height: 32px;
+  padding: 0 9px;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--accent);
+  border-radius: 7px;
+  outline: none;
+}
+
+.new-folder-form button {
+  flex: none;
+  height: 32px;
+  padding: 0 10px;
+  color: #ffffff;
+  background: var(--accent);
+  border: 0;
+  border-radius: 7px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.new-folder-form button:hover {
+  background: var(--accent-hover);
+}
+
+.folder-item.is-drop-target {
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+
+.folder-item.is-dragging {
+  opacity: 0.45;
+}
+
+.folder-context-menu {
+  position: fixed;
+  z-index: 50;
+  min-width: 150px;
+  padding: 5px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+}
+
+.folder-context-menu button {
+  display: block;
+  width: 100%;
+  padding: 8px 10px;
+  color: var(--text);
+  text-align: left;
+  background: transparent;
+  border: 0;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.folder-context-menu button:hover {
+  background: var(--hover);
+}
+
+.folder-context-menu button.danger {
+  color: var(--danger);
+}
+
+.folder-editor-overlay {
+  position: fixed;
+  z-index: 60;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.38);
+}
+
+.folder-editor-panel {
+  width: min(360px, 100%);
+  padding: 22px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+}
+
+.folder-editor-panel h2 {
+  margin: 0 0 18px;
+  color: var(--text);
+  font-size: 18px;
+}
+
+.folder-editor-panel label {
+  display: block;
+  margin-bottom: 14px;
+  color: var(--muted-strong);
+  font-size: 13px;
+}
+
+.folder-editor-panel label span {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.folder-editor-panel input,
+.folder-editor-panel select {
+  width: 100%;
+  height: 38px;
+  padding: 0 10px;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  outline: none;
+}
+
+.folder-editor-panel input:focus,
+.folder-editor-panel select:focus {
+  border-color: var(--accent);
+}
+
+.folder-editor-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.folder-editor-actions button {
+  height: 34px;
+  padding: 0 13px;
+  color: var(--text);
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  cursor: pointer;
+  font-weight: 650;
+}
+
+.folder-editor-actions button[type="submit"] {
+  color: #ffffff;
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
 .list-toolbar {
   display: flex;
   align-items: center;
@@ -665,6 +979,30 @@ button {
   font-size: 12px;
 }
 
+.folder-picker {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.folder-select {
+  max-width: 150px;
+  height: 30px;
+  padding: 0 25px 0 8px;
+  color: var(--muted-strong);
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  outline: none;
+  cursor: pointer;
+}
+
+.folder-select:focus {
+  border-color: var(--accent);
+}
+
 .icon-button {
   display: inline-grid;
   flex: none;
@@ -698,6 +1036,16 @@ button {
 .icon-button.primary:hover {
   background: var(--accent-hover);
   border-color: var(--accent-hover);
+}
+
+.icon-button.small {
+  width: 28px;
+  height: 28px;
+}
+
+.icon-button.small .icon {
+  width: 16px;
+  height: 16px;
 }
 
 .icon-button.danger {

@@ -60,6 +60,35 @@
           >
         </div>
 
+        <section class="folder-section" aria-label="文件夹">
+          <div class="folder-heading">
+            <h2>文件夹</h2>
+            <button
+              id="addFolderButton"
+              class="icon-button small"
+              type="button"
+              title="新建文件夹"
+              aria-label="新建文件夹"
+              data-testid="add-folder"
+            >
+              <svg class="icon" aria-hidden="true"><use href="#icon-plus"></use></svg>
+            </button>
+          </div>
+          <div id="folderList" class="folder-list" data-testid="folder-list"></div>
+          <form id="newFolderForm" class="new-folder-form" data-testid="new-folder-form" hidden>
+            <input
+              id="newFolderInput"
+              class="new-folder-input"
+              type="text"
+              placeholder="文件夹名称"
+              autocomplete="off"
+              aria-label="文件夹名称"
+              data-testid="new-folder-input"
+            >
+            <button type="submit">添加</button>
+          </form>
+        </section>
+
         <div class="list-toolbar">
           <span id="noteCount" class="note-count" data-testid="note-count">0 条笔记</span>
           <label class="sr-only" for="sortSelect">排序方式</label>
@@ -177,10 +206,39 @@
 
           <footer class="editor-footer">
             <span id="wordCount" class="meta" data-testid="word-count">0 字</span>
+            <label class="folder-picker">
+              <span>文件夹</span>
+              <select id="folderSelect" class="folder-select" data-testid="folder-select"></select>
+            </label>
             <span id="updatedAt" class="meta" data-testid="updated-at"></span>
           </footer>
         </section>
       </main>
+    </div>
+
+    <div id="folderContextMenu" class="folder-context-menu" data-testid="folder-context-menu" hidden>
+      <button type="button" data-context-action="edit-folder">编辑属性</button>
+      <button type="button" data-context-action="add-subfolder">新建子文件夹</button>
+      <button type="button" data-context-action="move-up">移动到上一级</button>
+      <button type="button" class="danger" data-context-action="delete-folder">删除文件夹</button>
+    </div>
+
+    <div id="folderEditorOverlay" class="folder-editor-overlay" data-testid="folder-editor-overlay" hidden>
+      <form id="folderEditorForm" class="folder-editor-panel" data-testid="folder-editor-form">
+        <h2>编辑文件夹</h2>
+        <label>
+          <span>名称</span>
+          <input id="folderEditorName" type="text" autocomplete="off" data-testid="folder-editor-name">
+        </label>
+        <label>
+          <span>上级文件夹</span>
+          <select id="folderEditorParent" data-testid="folder-editor-parent"></select>
+        </label>
+        <div class="folder-editor-actions">
+          <button id="cancelFolderEditor" type="button">取消</button>
+          <button type="submit">保存</button>
+        </div>
+      </form>
     </div>
 
     <svg class="svg-sprite" aria-hidden="true">
@@ -211,6 +269,16 @@
       </symbol>
       <symbol id="icon-moon" viewBox="0 0 24 24">
         <path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"></path>
+      </symbol>
+      <symbol id="icon-folder" viewBox="0 0 24 24">
+        <path d="M3 6h7l2 2h9v11H3z"></path>
+      </symbol>
+      <symbol id="icon-edit" viewBox="0 0 24 24">
+        <path d="m4 20 4-1 11-11-3-3L5 16z"></path>
+        <path d="m13 7 4 4"></path>
+      </symbol>
+      <symbol id="icon-chevron" viewBox="0 0 24 24">
+        <path d="m9 18 6-6-6-6"></path>
       </symbol>
     </svg>
 

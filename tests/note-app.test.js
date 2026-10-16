@@ -10,7 +10,8 @@ test('createNote returns a complete note with deterministic overrides', () => {
     content: '讨论下周发布计划',
     createdAt: 100,
     updatedAt: 200,
-    pinned: true
+    pinned: true,
+    folderId: null
   });
 
   assert.deepEqual(note, {
@@ -19,7 +20,8 @@ test('createNote returns a complete note with deterministic overrides', () => {
     content: '讨论下周发布计划',
     createdAt: 100,
     updatedAt: 200,
-    pinned: true
+    pinned: true,
+    folderId: null
   });
 });
 
@@ -32,6 +34,7 @@ test('createNote fills sensible defaults for a blank note', () => {
   assert.equal(note.createdAt, 1234);
   assert.equal(note.updatedAt, 1234);
   assert.equal(note.pinned, false);
+  assert.equal(note.folderId, null);
 });
 
 test('updateNote changes content and bumps updatedAt by default', () => {
@@ -63,6 +66,50 @@ test('deleteNote removes only the requested id', () => {
 
   assert.deepEqual(result.map((note) => note.id), ['a', 'c']);
   assert.deepEqual(notes.map((note) => note.id), ['a', 'b', 'c']);
+});
+
+test('folder helpers create, update, sort, and delete folders', () => {
+  const first = NoteApp.createFolder({ id: 'folder-1', name: '工作', createdAt: 2 });
+  const second = NoteApp.createFolder({ id: 'folder-2', name: '生活', createdAt: 1, parentId: 'folder-1' });
+
+  assert.deepEqual(NoteApp.sortFolders([first, second]).map((folder) => folder.id), ['folder-2', 'folder-1']);
+  assert.equal(NoteApp.updateFolder(first, { name: '项目' }).name, '项目');
+  assert.deepEqual(NoteApp.deleteFolder([first, second], 'folder-1').map((folder) => folder.id), ['folder-2']);
+});
+
+test('folder tree helpers find children, descendants, and paths', () => {
+  const root = NoteApp.createFolder({ id: 'root', name: '工作' });
+  const child = NoteApp.createFolder({ id: 'child', name: '项目', parentId: 'root' });
+  const grandchild = NoteApp.createFolder({ id: 'grandchild', name: '前端', parentId: 'child' });
+  const folders = [root, child, grandchild];
+
+  assert.deepEqual(NoteApp.getChildFolders(folders, 'root').map((folder) => folder.id), ['child']);
+  assert.equal(NoteApp.isDescendantFolder(folders, 'grandchild', 'root'), true);
+  assert.deepEqual(NoteApp.getFolderPath(folders, 'grandchild'), ['工作', '项目', '前端']);
+});
+
+test('moveFolderInList changes parent and blocks invalid descendant moves', () => {
+  const root = NoteApp.createFolder({ id: 'root', name: '工作' });
+  const child = NoteApp.createFolder({ id: 'child', name: '项目', parentId: 'root' });
+  const grandchild = NoteApp.createFolder({ id: 'grandchild', name: '前端', parentId: 'child' });
+  const other = NoteApp.createFolder({ id: 'other', name: '生活' });
+  const folders = [root, child, grandchild, other];
+
+  const moved = NoteApp.moveFolderInList(folders, 'child', 'other');
+  assert.equal(moved.find((folder) => folder.id === 'child').parentId, 'other');
+
+  const invalid = NoteApp.moveFolderInList(folders, 'root', 'grandchild');
+  assert.equal(invalid.find((folder) => folder.id === 'root').parentId, null);
+});
+
+test('folder storage helpers round-trip folder lists', () => {
+  const storage = NoteApp.createMemoryStorage();
+  const folders = [NoteApp.createFolder({ id: 'folder-1', name: '工作' })];
+
+  NoteApp.saveFolders(storage, folders);
+
+  assert.deepEqual(NoteApp.loadFolders(storage), folders);
+  assert.deepEqual(NoteApp.deserializeFolders('{bad json'), []);
 });
 
 test('sortNotes puts pinned notes first and orders by updatedAt', () => {

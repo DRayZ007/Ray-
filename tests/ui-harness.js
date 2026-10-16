@@ -58,6 +58,31 @@
       click('[data-testid="theme-toggle"]');
       assert(document.documentElement.dataset.theme === initialTheme, 'theme toggle should switch back');
 
+      assert(document.querySelectorAll('[data-folder-id]').length >= 2, 'folder list should include built-in folders');
+      click('[data-testid="add-folder"]');
+      assert(!document.querySelector('[data-testid="new-folder-form"]').hidden, 'new folder form should open');
+      input('[data-testid="new-folder-input"]', '工作');
+      document.querySelector('[data-testid="new-folder-form"]').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+
+      var savedFolders = JSON.parse(localStorage.getItem('mark-notes:folders:v1'));
+      var workFolder = savedFolders.find(function (folder) { return folder.name === '工作'; });
+      assert(workFolder, 'new folder should be persisted');
+      assert(
+        Array.from(document.querySelectorAll('[data-testid="folder-item"] .folder-name')).some(function (name) {
+          return name.textContent.trim() === '工作';
+        }),
+        'new folder should appear in the sidebar'
+      );
+
+      var workFolderRow = document.querySelector('.folder-item[data-folder-id="' + workFolder.id + '"]');
+      workFolderRow.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 120, clientY: 120 }));
+      assert(!document.querySelector('[data-testid="folder-context-menu"]').hidden, 'folder context menu should open');
+      click('[data-context-action="edit-folder"]');
+      assert(!document.querySelector('[data-testid="folder-editor-overlay"]').hidden, 'folder editor should open');
+      assert(value('[data-testid="folder-editor-name"]') === '工作', 'folder editor should show the current name');
+      document.querySelector('[data-testid="folder-editor-form"]').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+      assert(document.querySelector('[data-testid="folder-editor-overlay"]').hidden, 'folder editor should close after save');
+
       click('[data-testid="new-note"]');
       assert(!document.querySelector('[data-testid="editor"]').hidden, 'editor should open after creating a note');
       assert(document.querySelector('[data-testid="editor-empty"]').hidden, 'empty state should hide after opening a note');
@@ -70,6 +95,10 @@
       assert(text('[data-testid="word-count"]') === '6 字', 'word count should count CJK characters');
       assert(text('[data-testid="note-item"] .note-title') === '项目计划', 'list should show the note title');
       assert(value('[data-testid="content-input"]') === '编写 **测试** 用例', 'content should keep Markdown source');
+      assert(
+        JSON.parse(localStorage.getItem('mark-notes:v1'))[0].folderId === workFolder.id,
+        'new note should be assigned to the selected folder'
+      );
 
       click('[data-testid="preview-mode"]');
       assert(document.querySelector('[data-testid="content-input"]').hidden, 'textarea should hide in preview mode');
@@ -80,10 +109,27 @@
       );
       click('[data-testid="edit-mode"]');
 
+      document.querySelector('[data-action="add-subfolder"][data-id="' + workFolder.id + '"]').click();
+      input('[data-testid="new-folder-input"]', '子项目');
+      document.querySelector('[data-testid="new-folder-form"]').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+
+      var childFolders = JSON.parse(localStorage.getItem('mark-notes:folders:v1'));
+      var childFolder = childFolders.find(function (folder) { return folder.name === '子项目'; });
+      assert(childFolder && childFolder.parentId === workFolder.id, 'subfolder should be nested under its parent');
+
       click('[data-testid="new-note"]');
       input('[data-testid="title-input"]', '购物清单');
       input('[data-testid="content-input"]', '牛奶 面包');
+      document.querySelector('.folder-select[data-folder-id="all"]').click();
       assert(document.querySelectorAll('[data-testid="note-item"]').length === 2, 'two notes should be listed');
+
+      document.querySelector('.folder-select[data-folder-id="' + workFolder.id + '"]').click();
+      assert(document.querySelectorAll('[data-testid="note-item"]').length === 2, 'parent folder should include descendant notes');
+      document.querySelector('.folder-select[data-folder-id="' + childFolder.id + '"]').click();
+      assert(document.querySelectorAll('[data-testid="note-item"]').length === 1, 'child folder should show only its own notes');
+      assert(text('[data-testid="note-item"] .note-title') === '购物清单', 'child folder should show the shopping note');
+      document.querySelector('.folder-select[data-folder-id="all"]').click();
+      assert(document.querySelectorAll('[data-testid="note-item"]').length === 2, 'all folder should show every note');
 
       var sortSelect = document.querySelector('[data-testid="sort-select"]');
       assert(
