@@ -170,14 +170,40 @@ button {
 .folder-toggle-spacer { width: 20px; flex: none; }
 .note-topline { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; }
 .note-topline .note-title { margin: 0; display: block; }
-.storage-status { padding: 12px 18px; border-top: 1px solid var(--line); font-size: 12px; color: var(--muted); text-align: right; }
-.browser-menubar { position: fixed; z-index: 40; top: 0; left: 0; right: 0; height: 32px; background: var(--surface); border-bottom: 1px solid var(--line); }
-.browser-menubar summary { padding: 4px 16px; width: fit-content; cursor: pointer; }
-.browser-menubar [role="menu"] { width: max-content; padding: 6px; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; box-shadow: var(--shadow); }
-.browser-menubar button { display: block; width: 100%; padding: 8px 12px; border: 0; background: transparent; color: var(--text); text-align: left; cursor: pointer; }
-.browser-menubar button:hover { background: var(--hover); }
-.browser-layout .app-shell { padding-top: 32px; }
+.browser-menubar { position: fixed; z-index: 40; top: 0; left: 0; right: 0; height: 40px; display: flex; align-items: center; padding: 4px 10px; background: var(--surface); border-bottom: 1px solid var(--line-soft); }
+.file-menu-trigger { display: flex; align-items: center; gap: 7px; height: 30px; padding: 0 10px; border: 1px solid transparent; border-radius: 7px; background: transparent; color: var(--muted-strong); font-size: 13px; font-weight: 650; cursor: pointer; }
+.file-menu-trigger .icon { width: 15px; height: 15px; }
+.file-menu-trigger .menu-chevron { width: 11px; height: 11px; transform: rotate(90deg); opacity: .65; }
+.file-menu-trigger:hover, .file-menu-trigger.is-open { background: var(--accent-soft); color: var(--accent); }
+.file-dropdown { position: absolute; top: 44px; left: 10px; min-width: 246px; padding: 6px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); box-shadow: 0 12px 36px rgba(35, 25, 10, .15), 0 2px 6px rgba(35, 25, 10, .06); }
+.file-dropdown button { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 38px; padding: 8px 10px; border: 0; border-radius: 7px; background: transparent; color: var(--text); text-align: left; font-size: 13px; cursor: pointer; }
+.file-dropdown button .icon { width: 17px; height: 17px; color: var(--muted); }
+.file-dropdown button:hover, .file-dropdown button:focus-visible { background: var(--accent-soft); outline: none; }
+.file-dropdown kbd { margin-left: auto; padding-left: 14px; color: var(--muted); font: 11px 'Segoe UI', sans-serif; white-space: nowrap; }
+.menu-divider { height: 1px; background: var(--line-soft); margin: 5px 7px; }
+.browser-layout .app-shell { padding-top: 40px; }
 .browser-layout .sidebar, .browser-layout .editor-pane { height: 100%; }
+.note-item.is-dragging { opacity: .45; }
+.note-item.drop-before::after, .note-item.drop-after::after { position: absolute; left: 8px; right: 8px; height: 3px; background: var(--accent); border-radius: 3px; content: ''; }
+.note-item.drop-before::after { top: -4px; }
+.note-item.drop-after::after { bottom: -4px; }
+.folder-editor-panel:has(.export-formats) { width: min(440px, 100%); padding: 26px; border-radius: 16px; }
+.export-intro { margin: -6px 0 18px; font-size: 13px; line-height: 1.65; color: var(--muted); overflow-wrap: anywhere; }
+.export-intro strong { color: var(--muted-strong); font-weight: 600; }
+.export-formats { margin: 0; padding: 0; border: 0; display: grid; gap: 10px; }
+.export-formats .export-format { position: relative; display: flex; align-items: center; gap: 12px; padding: 13px; margin: 0; border: 1px solid var(--line); border-radius: 10px; cursor: pointer; }
+.export-formats .export-format.is-selected { border-color: var(--accent); background: var(--accent-soft); }
+.export-formats .export-format.is-disabled { opacity: .45; cursor: default; }
+.export-formats .export-format input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.export-format:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
+.export-formats .export-format span { display: block; margin: 0; }
+.export-format .format-glyph { flex: none; width: 38px; padding: 12px 0; text-align: center; background: var(--surface); border: 1px solid var(--line-soft); border-radius: 8px; color: var(--accent); font-size: 12px; font-weight: 750; }
+.export-format .format-copy { flex: 1; min-width: 0; }
+.export-format strong { display: block; color: var(--text); font-size: 14px; }
+.export-format small { display: block; margin-top: 4px; color: var(--muted); font-size: 11px; line-height: 1.5; }
+.export-format .format-extension { color: var(--muted); font-size: 12px; }
+.folder-editor-actions .primary-action { display: flex; align-items: center; gap: 6px; background: var(--accent); border-color: var(--accent); color: var(--surface); }
+.primary-action .icon { width: 15px; height: 15px; }
 .error-banner, .notice { position: fixed; top: 8px; left: 50%; transform: translateX(-50%); z-index: 100; display: flex; align-items: center; gap: 12px; max-width: 85vw; padding: 12px 16px; background: var(--surface); color: var(--text); border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow); overflow-wrap: anywhere; }
 .error-banner { border-color: var(--danger); }
 .error-banner button, .notice button { flex: none; cursor: pointer; background: var(--surface); color: var(--text); border: 1px solid var(--line); border-radius: 4px; padding: 4px 8px; }

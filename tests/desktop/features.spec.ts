@@ -1,4 +1,4 @@
-import { test, expect, fileMenuCommand } from './fixtures';
+import { test, expect, fileMenuCommand, exportViaMenu } from './fixtures';
 import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { emptyData } from '../../src/shared/data';
@@ -43,7 +43,7 @@ test('native import/export, conflict preservation, repeated import and invalid f
   await notebook.getByTestId('content-input').fill('本地修改');
   await importFile(); await expect(notebook.getByTestId('note-item')).toHaveCount(2);
   await importFile(); await expect(notebook.getByTestId('note-item')).toHaveCount(2);
-  await fileMenuCommand(desktop, '导出全部数据（JSON）…'); await expect(notebook.getByRole('status')).toHaveText(/JSON 完整备份已导出/);
+  await exportViaMenu(desktop, notebook, '完整备份'); await expect(notebook.getByRole('status')).toHaveText(/JSON 完整备份已导出/);
   const exported = JSON.parse(await readFile(output, 'utf8')); expect(exported.notes.map((note: { content: string }) => note.content).sort()).toEqual(['外部原稿', '本地修改'].sort());
   await writeFile(input, '{broken'); await fileMenuCommand(desktop, '导入 JSON 备份…'); await expect(notebook.getByRole('alert')).toBeVisible(); await expect(notebook.getByTestId('note-item')).toHaveCount(2);
   const { rm } = await import('node:fs/promises'); await rm(output, { force: true });

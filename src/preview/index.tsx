@@ -36,6 +36,10 @@ const api: DesktopAPI = {
     const validated = validateData(value);
     localStorage.setItem(storageKey, JSON.stringify(validated)); current = validated;
   },
+  saveBeforeUnload(value) {
+    const validated = validateData(value);
+    localStorage.setItem(storageKey, JSON.stringify(validated)); current = validated;
+  },
   async previewImport() {
     const file = await new Promise<File | null>(resolve => {
       const input = document.createElement('input'); input.type = 'file'; input.accept = '.json,application/json'; input.hidden = true;

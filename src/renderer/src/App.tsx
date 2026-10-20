@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { CSSProperties, FormEvent, PointerEvent } from 'react';
 import type { Folder, ImportPreview, MenuCommand, Note, NoteExportFormat } from '../../shared/types';
-import { createFolder, createNote, deleteNote, filterNotes, getFolderPath, isDescendantFolder, moveFolderInList, notesForFolder, removeFolderTree, sortNotes, updateNote } from '../../shared/domain';
+import { createFolder, createNote, deleteNote, filterNotes, getDisplayTitle, getFolderPath, isDescendantFolder, moveFolderInList, moveNoteToFolder, noteSortForView, noteViewKey, notesForFolder, removeFolderTree, reorderNotes, sortNotes, updateNote } from '../../shared/domain';
 import type { SortMode } from '../../shared/domain';
 import { useNotebook } from './useNotebook';
 import { Icon } from './Icon';
@@ -10,17 +10,21 @@ import { NoteList } from './NoteList';
 import { Editor } from './Editor';
 import { Modal } from './Modal';
 import { BrowserMenu } from './BrowserMenu';
+import { ExportDialog } from './ExportDialog';
+import type { ExportFormat } from './ExportDialog';
 import logo from '../../../resources/icon.svg';
 
 export function App() {
   const { data, ready, error, setError, status, change, replaceSaved, flush, current } = useNotebook();
   const [active, setActive] = useState<string | null>(null), [selected, setSelected] = useState('all');
-  const [query, setQuery] = useState(''), [sort, setSort] = useState<SortMode>('updated'), [mode, setMode] = useState<'edit' | 'preview'>('edit');
+  const [query, setQuery] = useState(''), [mode, setMode] = useState<'edit' | 'preview'>('edit');
+  const sort = noteSortForView(data, selected);
   const [newFolderParent, setNewFolderParent] = useState<string | null | undefined>(undefined), [folderName, setFolderName] = useState('');
   const [context, setContext] = useState<{ folder: Folder; x: number; y: number } | null>(null);
   const [editing, setEditing] = useState<{ id: string; name: string; parentId: string | null } | null>(null);
   const [deleting, setDeleting] = useState<{ type: 'note' | 'folder'; id: string } | null>(null);
   const [preview, setPreview] = useState<ImportPreview | null>(null);
+  const [exportDialog, setExportDialog] = useState<{ format: ExportFormat; noteId: string | null } | null>(null);
   const [busy, setBusy] = useState(false), [notice, setNotice] = useState('');
   const [exportFailure, setExportFailure] = useState<{ message: string; format: NoteExportFormat | 'backup'; noteId: string | null } | null>(null);
   const locked = useRef(false), search = useRef<HTMLInputElement>(null), initialSelection = useRef(false);
@@ -68,15 +72,13 @@ export function App() {
   }
   const commandHandler = useRef<(command: MenuCommand) => void>(() => {});
   commandHandler.current = command => {
-    if (!ready || locked.current || preview || editing || deleting) return;
+    if (!ready || locked.current || preview || editing || deleting || exportDialog) return;
     if (command === 'new') newNote();
     if (command === 'save') void flush().catch(() => {});
     if (command === 'search') { search.current?.focus(); search.current?.select(); }
     if (command === 'theme') toggleTheme();
     if (command === 'import') void beginImport();
-    if (command === 'export') void exportData('backup');
-    if (command === 'export-markdown') void exportData('markdown');
-    if (command === 'export-txt') void exportData('txt');
+    if (command === 'export') setExportDialog({ format: active ? 'markdown' : 'backup', noteId: active });
   };
   useEffect(() => window.desktop.onCommand(command => commandHandler.current(command)), []);
   useEffect(() => window.desktop.onCloseRequested(async () => {
@@ -91,6 +93,7 @@ export function App() {
       if ((event.ctrlKey || event.metaKey) && ['n', 's', 'f'].includes(event.key.toLowerCase())) {
         event.preventDefault(); commandHandler.current(event.key.toLowerCase() === 'n' ? 'new' : event.key.toLowerCase() === 's' ? 'save' : 'search');
       }
+      if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key.toLowerCase() === 'e') { event.preventDefault(); commandHandler.current('export'); }
     };
     document.addEventListener('keydown', keydown); return () => document.removeEventListener('keydown', keydown);
   }, []);
@@ -101,6 +104,14 @@ export function App() {
     if (!name.trim()) return;
     change(value => ({ ...value, folders: value.folders.map(folder => folder.id === id ? { ...folder, name: name.trim() } : folder) }));
   }
+  function moveNote(id: string, folderId: string | null) {
+    change(value => moveNoteToFolder(value, id, folderId));
+  }
+  function reorder(sourceId: string, targetId: string, before: boolean) {
+    const source = current.current.notes.find(note => note.id === sourceId), target = current.current.notes.find(note => note.id === targetId);
+    if (source && target && source.pinned !== target.pinned) { setNotice('置顶笔记固定在前，可在同类笔记之间调整顺序'); return; }
+    change(value => reorderNotes(value, selected, sourceId, targetId, before));
+  }
   function createFolderFromForm(event: FormEvent) {
     event.preventDefault(); if (!folderName.trim()) return;
     const folder = createFolder({ name: folderName, parentId: newFolderParent ?? null });
@@ -110,7 +121,7 @@ export function App() {
   function confirmDelete() {
     if (!deleting) return;
     if (deleting.type === 'note') {
-      const remaining = sortNotes(filterNotes(notesForFolder({ ...data, notes: deleteNote(data.notes, deleting.id) }, selected), query), sort);
+      const remaining = sortNotes(filterNotes(notesForFolder({ ...data, notes: deleteNote(data.notes, deleting.id) }, selected), query), sort, data.settings.noteOrders?.[noteViewKey(selected)]);
       change(value => ({ ...value, notes: deleteNote(value.notes, deleting.id) })); setActive(remaining[0]?.id ?? null);
     } else {
       const folder = data.folders.find(f => f.id === deleting.id);
@@ -126,27 +137,27 @@ export function App() {
     if (event.currentTarget.hasPointerCapture(event.pointerId)) resize(window.innerWidth <= 760 ? event.clientY : event.clientX, window.innerWidth <= 760);
   }
   const note = data.notes.find(n => n.id === active);
-  const visible = sortNotes(filterNotes(notesForFolder(data, selected), query), sort);
+  const visible = sortNotes(filterNotes(notesForFolder(data, selected), query), sort, data.settings.noteOrders?.[noteViewKey(selected)]);
   const closeEditing = useCallback(() => setEditing(null), []), closeDeleting = useCallback(() => setDeleting(null), []);
   const closePreview = useCallback(() => { if (!locked.current) setPreview(null); }, []);
+  const closeExport = useCallback(() => setExportDialog(null), []);
   if (!ready) return <div className="loading-screen" role={error ? 'alert' : 'status'}>{error || '正在打开笔记…'}</div>;
   return <>
     {error && <div className="error-banner" role="alert">{error}<button onClick={() => { void flush().catch(() => {}); }}>重试保存</button><button aria-label="关闭错误提示" onClick={() => setError('')}>×</button></div>}
     {!error && exportFailure && <div className="error-banner" role="alert">导出失败：{exportFailure.message}<button disabled={busy} onClick={() => { void exportData(exportFailure.format, exportFailure.noteId); }}>重新导出</button><button aria-label="关闭错误提示" onClick={() => setExportFailure(null)}>×</button></div>}
     {notice && <div className="notice" role="status">{notice}<button aria-label="关闭提示" onClick={() => setNotice('')}>×</button></div>}
-    {window.desktop.environment === 'browser' && <BrowserMenu command={command => commandHandler.current(command)} disabled={busy || !!preview || !!editing || !!deleting} />}
-    <fieldset className={`app-fieldset ${window.desktop.environment === 'browser' ? 'browser-layout' : ''}`} disabled={busy || !!preview} aria-busy={busy}>
-      <div className="app-shell" inert={busy || !!preview || !!editing || !!deleting} style={{ '--sidebar-width': `${data.settings.sidebarWidth}px`, '--stack-top-height': `${data.settings.stackHeight}px` } as CSSProperties} onPointerDown={() => { if (context) setContext(null); }}>
+    {window.desktop.environment === 'browser' && <BrowserMenu command={command => commandHandler.current(command)} disabled={busy || !!preview || !!editing || !!deleting || !!exportDialog} />}
+    <fieldset className={`app-fieldset ${window.desktop.environment === 'browser' ? 'browser-layout' : ''}`} disabled={busy || !!preview || !!exportDialog} aria-busy={busy}>
+      <div className="app-shell" inert={busy || !!preview || !!editing || !!deleting || !!exportDialog} style={{ '--sidebar-width': `${data.settings.sidebarWidth}px`, '--stack-top-height': `${data.settings.stackHeight}px` } as CSSProperties} onPointerDown={() => { if (context) setContext(null); }}>
         <aside className="sidebar" aria-label="笔记列表"><header className="sidebar-header"><div className="brand"><img className="app-logo" src={logo} width="32" height="32" alt="" data-testid="app-logo" /><div className="brand-text"><p className="eyebrow">NOTES</p><input className="app-title-input" aria-label="笔记名称" data-testid="app-title-input" value={data.settings.appTitle} maxLength={200} onChange={event => change(value => ({ ...value, settings: { ...value.settings, appTitle: event.target.value } }))} onBlur={() => { if (!data.settings.appTitle.trim()) change(value => ({ ...value, settings: { ...value.settings, appTitle: 'Ray的笔记' } })); }} /></div></div>
           <div className="header-actions"><button className="icon-button" aria-label={theme === 'dark' ? '切换浅色模式' : '切换暗黑模式'} data-testid="theme-toggle" onClick={toggleTheme}><Icon name={theme === 'dark' ? 'sun' : 'moon'} /></button><button className="icon-button primary" aria-label="新建笔记" title="新建笔记 (Ctrl+N)" data-testid="new-note" onClick={newNote}><Icon name="plus" /></button></div></header>
           <div className="search-row"><Icon name="search" className="search-icon" /><input ref={search} className="search-input" type="search" aria-label="搜索笔记" data-testid="search-input" placeholder="搜索笔记" value={query} onChange={event => setQuery(event.target.value)} /></div>
           <section className="folder-section" aria-label="文件夹"><div className="folder-heading"><h2>文件夹</h2><button className="icon-button small" aria-label="新建文件夹" data-testid="add-folder" onClick={() => { setNewFolderParent(null); setFolderName(''); }}><Icon name="plus" /></button></div>
-            <FolderTree data={data} selected={selected} select={setSelected} move={moveFolder} rename={renameFolder} context={(folder, x, y) => setContext({ folder, x: Math.min(x, window.innerWidth - 180), y: Math.min(y, window.innerHeight - 180) })} />
+            <FolderTree data={data} selected={selected} select={setSelected} move={moveFolder} moveNote={moveNote} rename={renameFolder} context={(folder, x, y) => setContext({ folder, x: Math.min(x, window.innerWidth - 180), y: Math.min(y, window.innerHeight - 180) })} />
             {newFolderParent !== undefined && <form className="new-folder-form" data-testid="new-folder-form" onSubmit={createFolderFromForm}><input autoFocus className="new-folder-input" aria-label="文件夹名称" data-testid="new-folder-input" placeholder="文件夹名称" value={folderName} onChange={event => setFolderName(event.target.value)} /><button type="submit">添加</button><button type="button" aria-label="取消新建文件夹" onClick={() => setNewFolderParent(undefined)}>×</button></form>}
           </section>
-          <div className="list-toolbar"><span className="note-count" data-testid="note-count">{visible.length} 条笔记</span><select className="sort-select" aria-label="排序方式" data-testid="sort-select" value={sort} onChange={event => setSort(event.target.value as SortMode)}><option value="updated">最近编辑</option><option value="created">创建时间</option><option value="title">文字排序</option></select></div>
-          <NoteList notes={visible} folders={data.folders} activeId={active} select={id => { setActive(id); setMode('edit'); }} pin={pin} query={query} />
-          <footer className="storage-status"><span>{busy ? '处理中…' : '保存在本机'}</span></footer>
+          <div className="list-toolbar"><span className="note-count" data-testid="note-count">{visible.length} 条笔记</span><select className="sort-select" aria-label="排序方式" data-testid="sort-select" value={sort} onChange={event => { const value = event.target.value as SortMode; change(data => ({ ...data, settings: { ...data.settings, noteSorts: { ...data.settings.noteSorts, [noteViewKey(selected)]: value } } })); }}><option value="created">创建时间</option><option value="manual">手动排序</option><option value="updated">最近编辑</option><option value="title">文字排序</option></select></div>
+          <NoteList notes={visible} folders={data.folders} activeId={active} select={id => { setActive(id); setMode('edit'); }} pin={pin} query={query} reorder={reorder} />
         </aside>
         <div className="resizer" role="separator" aria-label="调整笔记列表宽度" aria-orientation={window.innerWidth <= 760 ? 'horizontal' : 'vertical'} tabIndex={0} data-testid="resizer" onPointerDown={event => { if (!busy) { event.preventDefault(); event.currentTarget.setPointerCapture(event.pointerId); } }} onPointerMove={pointerResize} onPointerUp={event => { if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId); }} onDoubleClick={() => resize(window.innerWidth <= 760 ? 340 : 340, window.innerWidth <= 760)} onKeyDown={event => {
           const vertical = window.innerWidth <= 760;
@@ -167,5 +178,6 @@ export function App() {
     }}><label><span>名称</span><input data-testid="folder-editor-name" value={editing.name} onChange={event => setEditing({ ...editing, name: event.target.value })} /></label><label><span>上级文件夹</span><select data-testid="folder-editor-parent" value={editing.parentId ?? ''} onChange={event => setEditing({ ...editing, parentId: event.target.value || null })}><option value="">顶层文件夹</option>{data.folders.filter(folder => !isDescendantFolder(data.folders, folder.id, editing.id)).map(folder => <option key={folder.id} value={folder.id}>{getFolderPath(data.folders, folder.id).join(' / ')}</option>)}</select></label><div className="folder-editor-actions"><button type="button" onClick={closeEditing}>取消</button><button type="submit">保存</button></div></form></Modal>}
     {deleting && <Modal title={deleting.type === 'folder' ? '删除文件夹' : '删除笔记'} cancel={closeDeleting}><p>{deleting.type === 'folder' ? '删除此文件夹及其子文件夹？里面的笔记会移到上一级文件夹。' : '确定删除这条笔记吗？此操作无法撤销。'}</p><div className="folder-editor-actions"><button onClick={closeDeleting}>取消</button><button className="danger" onClick={confirmDelete}>确认删除</button></div></Modal>}
     {preview && <Modal title="确认导入" cancel={closePreview}><p>新增 {preview.notes} 条笔记、{preview.folders} 个文件夹。</p><p>{preview.conflicts} 项冲突将保留副本，{preview.skipped} 项重复数据将跳过。</p><p>导入前会自动备份当前数据，已有内容不会被覆盖。</p><div className="folder-editor-actions"><button disabled={busy} onClick={closePreview}>取消</button><button disabled={busy} onClick={() => { void exclusive(async () => { const merged = await window.desktop.confirmImport(preview.token); replaceSaved(merged); setActive(merged.notes[0]?.id ?? null); setSelected('all'); setQuery(''); setPreview(null); setNotice('导入完成'); }); }}>确认导入</button></div></Modal>}
+    {exportDialog && <ExportDialog format={exportDialog.format} noteTitle={data.notes.find(note => note.id === exportDialog.noteId) ? getDisplayTitle(data.notes.find(note => note.id === exportDialog.noteId)!) : null} changeFormat={format => setExportDialog({ ...exportDialog, format })} cancel={closeExport} confirm={() => { const request = exportDialog; setExportDialog(null); void exportData(request.format, request.noteId); }} />}
   </>;
 }

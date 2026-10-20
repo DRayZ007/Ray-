@@ -5,7 +5,7 @@ export function Modal({ title, children, cancel, testId }: { title: string; chil
   const cancelRef = useRef(cancel); cancelRef.current = cancel;
   useEffect(() => {
     const previous = document.activeElement as HTMLElement | null;
-    const focusable = () => Array.from(ref.current?.querySelectorAll<HTMLElement>('button,input,select,[tabindex="0"]') ?? []);
+    const focusable = () => Array.from(ref.current?.querySelectorAll<HTMLElement>('button,input,select,[tabindex="0"]') ?? []).filter(element => !element.hasAttribute('disabled'));
     focusable()[0]?.focus();
     const keydown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') { event.preventDefault(); cancelRef.current(); }

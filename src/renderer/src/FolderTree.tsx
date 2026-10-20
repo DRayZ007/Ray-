@@ -6,9 +6,10 @@ import { Icon } from './Icon';
 interface Props {
   data: AppData; selected: string; select(id: string): void;
   move(id: string, parent: string | null): void; rename(id: string, name: string): void;
+  moveNote(id: string, folderId: string | null): void;
   context(folder: Folder, x: number, y: number): void;
 }
-export function FolderTree({ data, selected, select, move, rename, context }: Props) {
+export function FolderTree({ data, selected, select, move, rename, context, moveNote }: Props) {
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const [editing, setEditing] = useState<{ id: string; name: string } | null>(null);
   useEffect(() => {
@@ -17,10 +18,12 @@ export function FolderTree({ data, selected, select, move, rename, context }: Pr
       return next.size === previous.size ? previous : next;
     });
   }, [selected, data.folders]);
-  function drop(event: DragEvent, parent: string | null) {
+  function drop(event: DragEvent, parent: string | null, target: string) {
     event.preventDefault(); event.stopPropagation(); event.currentTarget.classList.remove('is-drop-target');
+    const noteId = event.dataTransfer.getData('application/x-marknotes-note');
+    if (noteId) { if (target !== 'all') moveNote(noteId, parent); return; }
     const id = event.dataTransfer.getData('application/x-marknotes-folder');
-    if (id) move(id, parent);
+    if (id && target !== 'none') move(id, parent);
   }
   function finishRename() { if (editing) { rename(editing.id, editing.name); setEditing(null); } }
   function row(id: string, label: string, folder?: Folder, depth = 0) {
@@ -30,10 +33,13 @@ export function FolderTree({ data, selected, select, move, rename, context }: Pr
         style={{ paddingLeft: 10 + depth * 18 }} draggable={!!folder}
         onDragStart={event => { event.dataTransfer.setData('application/x-marknotes-folder', id); event.dataTransfer.effectAllowed = 'move'; }}
         onDragOver={event => {
+          const isNote = event.dataTransfer.types.includes('application/x-marknotes-note');
+          const isFolder = event.dataTransfer.types.includes('application/x-marknotes-folder');
+          if ((!isNote && !isFolder) || (isNote && id === 'all') || (isFolder && id === 'none')) return;
           const source = data.folders.find(f => f.id === event.dataTransfer.getData('application/x-marknotes-folder'));
-          if (id === 'none' || (source && isDescendantFolder(data.folders, id, source.id))) return;
+          if (isFolder && source && isDescendantFolder(data.folders, id, source.id)) return;
           event.preventDefault(); event.dataTransfer.dropEffect = 'move'; event.currentTarget.classList.add('is-drop-target');
-        }} onDragLeave={event => event.currentTarget.classList.remove('is-drop-target')} onDrop={event => { if (id !== 'none') drop(event, folder?.id ?? null); }}
+        }} onDragLeave={event => event.currentTarget.classList.remove('is-drop-target')} onDrop={event => drop(event, folder?.id ?? null, id)}
         onContextMenu={event => { if (folder) { event.preventDefault(); context(folder, event.clientX, event.clientY); } }}>
         {children.length > 0 ? <button className={`folder-toggle ${collapsed.has(id) ? '' : 'is-expanded'}`} aria-label={`${collapsed.has(id) ? '展开' : '折叠'}${label}`} aria-expanded={!collapsed.has(id)} onClick={() => setCollapsed(previous => { const next = new Set(previous); if (next.has(id)) next.delete(id); else next.add(id); return next; })}><Icon name="chevron" /></button> : <span className="folder-toggle-spacer" />}
         {editing?.id === id ? <input className="folder-rename-input" aria-label="重命名文件夹" autoFocus value={editing.name} onChange={event => setEditing({ id, name: event.target.value })} onBlur={finishRename} onKeyDown={event => { if (event.key === 'Enter') finishRename(); if (event.key === 'Escape') setEditing(null); }} /> :

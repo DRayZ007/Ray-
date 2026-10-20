@@ -9,6 +9,7 @@ export function useNotebook() {
   const [status, setStatus] = useState('正在加载…');
   const current = useRef(data), revision = useRef(0), saved = useRef(0);
   const pending = useRef<Promise<void> | null>(null);
+  const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     let active = true;
     window.desktop.load().then(value => {
@@ -43,9 +44,18 @@ export function useNotebook() {
     try { await operation; } finally { pending.current = null; }
   }, []);
   useEffect(() => {
-    if (!ready || revision.current === saved.current) return;
-    const timer = setTimeout(() => { void flush().catch(() => {}); }, 250);
-    return () => clearTimeout(timer);
+    if (!ready || revision.current === saved.current || autoSaveTimer.current !== null) return;
+    autoSaveTimer.current = setTimeout(() => { autoSaveTimer.current = null; void flush().catch(() => {}); }, 250);
   }, [data, ready, flush]);
+  useEffect(() => () => { if (autoSaveTimer.current !== null) clearTimeout(autoSaveTimer.current); }, []);
+  useEffect(() => {
+    const beforeUnload = (event: BeforeUnloadEvent) => {
+      if (revision.current === saved.current || !window.desktop.saveBeforeUnload) return;
+      try { window.desktop.saveBeforeUnload(current.current); saved.current = revision.current; }
+      catch { event.preventDefault(); event.returnValue = ''; }
+    };
+    window.addEventListener('beforeunload', beforeUnload);
+    return () => window.removeEventListener('beforeunload', beforeUnload);
+  }, []);
   return { data, ready, error, setError, status, change, replaceSaved, flush, current };
 }

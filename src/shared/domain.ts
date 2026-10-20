@@ -1,8 +1,8 @@
-import type { AppData, Folder, Note } from './types';
+import type { AppData, Folder, Note, NoteSortMode } from './types';
 export { parseMarkdown } from './markdown';
 export const STORAGE_KEY = 'mark-notes:v1';
 export const FOLDERS_KEY = 'mark-notes:folders:v1';
-export type SortMode = 'updated' | 'created' | 'title';
+export type SortMode = NoteSortMode;
 const collator = new Intl.Collator('zh-CN', { sensitivity: 'base', numeric: true });
 const createId = (prefix: string) => `${prefix}-${crypto.randomUUID()}`;
 export function createNote(overrides: Partial<Note> & { now?: number } = {}): Note {
@@ -51,8 +51,41 @@ export function removeFolderTree(data: AppData, id: string): AppData {
   const removed = new Set(data.folders.filter(f => isDescendantFolder(data.folders, f.id, id)).map(f => f.id));
   return { ...data, folders: data.folders.filter(f => !removed.has(f.id)), notes: data.notes.map(n => n.folderId && removed.has(n.folderId) ? { ...n, folderId: folder.parentId } : n) };
 }
-export function sortNotes(notes: Note[], mode: SortMode): Note[] {
-  return notes.slice().sort((a, b) => Number(b.pinned) - Number(a.pinned) || (mode === 'title' ? collator.compare(a.title, b.title) : mode === 'created' ? b.createdAt - a.createdAt : b.updatedAt - a.updatedAt));
+export function sortNotes(notes: Note[], mode: SortMode, order: string[] = []): Note[] {
+  const positions = new Map(order.map((id, index) => [id, index]));
+  return notes.slice().sort((a, b) => {
+    const pinned = Number(b.pinned) - Number(a.pinned);
+    if (pinned) return pinned;
+    if (mode === 'manual') {
+      const delta = (positions.get(a.id) ?? order.length) - (positions.get(b.id) ?? order.length);
+      if (delta) return delta;
+    }
+    return mode === 'title' ? collator.compare(a.title, b.title) : mode === 'updated' ? b.updatedAt - a.updatedAt : b.createdAt - a.createdAt;
+  });
+}
+export const noteViewKey = (selected: string) => selected === 'all' || selected === 'none' ? selected : `folder:${selected}`;
+export const noteSortForView = (data: AppData, selected: string): SortMode => data.settings.noteSorts?.[noteViewKey(selected)] ?? (data.settings.noteOrders?.[noteViewKey(selected)] ? 'manual' : 'created');
+export function reorderNotes(data: AppData, selected: string, sourceId: string, targetId: string, before: boolean): AppData {
+  if (sourceId === targetId) return data;
+  const key = noteViewKey(selected);
+  const ordered = sortNotes(notesForFolder(data, selected), noteSortForView(data, selected), data.settings.noteOrders?.[key]);
+  const source = ordered.find(note => note.id === sourceId), target = ordered.find(note => note.id === targetId);
+  if (!source || !target || source.pinned !== target.pinned) return data;
+  const ids = ordered.filter(note => note.id !== sourceId).map(note => note.id);
+  ids.splice(ids.indexOf(targetId) + (before ? 0 : 1), 0, sourceId);
+  return { ...data, settings: { ...data.settings, noteOrders: { ...data.settings.noteOrders, [key]: ids }, noteSorts: { ...data.settings.noteSorts, [key]: 'manual' } } };
+}
+export function moveNoteToFolder(data: AppData, id: string, folderId: string | null): AppData {
+  const note = data.notes.find(note => note.id === id);
+  if (!note || note.folderId === folderId || (folderId && !data.folders.some(folder => folder.id === folderId))) return data;
+  const next = { ...data, notes: data.notes.map(note => note.id === id ? { ...note, folderId } : note) };
+  if (!data.settings.noteOrders) return next;
+  const orders = Object.fromEntries(Object.entries(data.settings.noteOrders).map(([key, ids]) => {
+    const selected = key.startsWith('folder:') ? key.slice(7) : key;
+    const members = new Set(notesForFolder(next, selected).map(note => note.id));
+    return [key, ids.filter(noteId => members.has(noteId))];
+  }));
+  return { ...next, settings: { ...next.settings, noteOrders: orders } };
 }
 export function filterNotes(notes: Note[], query: string): Note[] {
   const needle = query.trim().toLowerCase();

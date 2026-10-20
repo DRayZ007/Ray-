@@ -87,12 +87,14 @@ test('desktop removes duplicate footer controls and exports selected note after 
   const user = await start();
   expect(screen.queryByTestId('import-button')).not.toBeInTheDocument();
   expect(screen.queryByTestId('export-button')).not.toBeInTheDocument();
-  act(() => command('export-markdown'));
-  expect(screen.getByRole('status')).toHaveTextContent('请先选择');
+  act(() => command('export'));
+  expect(screen.getByRole('radio', { name: 'Markdown' })).toBeDisabled();
   expect(window.desktop.exportNote).not.toHaveBeenCalled();
+  await user.click(screen.getByRole('button', { name: '取消' }));
   await user.click(screen.getByTestId('new-note'));
   fireEvent.change(screen.getByTestId('content-input'), { target: { value: '刚输入的内容' } });
-  act(() => command('export-markdown'));
+  act(() => command('export'));
+  await user.click(screen.getByRole('button', { name: '导出文件' }));
   await waitFor(() => expect(window.desktop.exportNote).toHaveBeenCalledWith(expect.any(String), 'markdown'));
   const calls = vi.mocked(window.desktop.save).mock.calls;
   expect(calls.at(-1)![0].notes[0].content).toBe('刚输入的内容');
@@ -103,15 +105,59 @@ test('desktop removes duplicate footer controls and exports selected note after 
 test('cancelled export has no success message, failed export retries the same note and format', async () => {
   const user = await start(); await user.click(screen.getByTestId('new-note'));
   vi.mocked(window.desktop.exportNote).mockResolvedValueOnce(false);
-  act(() => command('export-txt'));
+  act(() => command('export'));
+  await user.click(screen.getByRole('radio', { name: '纯文本' }));
+  await user.click(screen.getByRole('button', { name: '导出文件' }));
   await waitFor(() => expect(window.desktop.exportNote).toHaveBeenCalledTimes(1));
   expect(screen.queryByRole('status')).not.toBeInTheDocument();
   vi.mocked(window.desktop.exportNote).mockRejectedValueOnce(new Error('没有权限写入此位置'));
-  act(() => command('export-txt'));
+  act(() => command('export'));
+  await user.click(screen.getByRole('radio', { name: '纯文本' }));
+  await user.click(screen.getByRole('button', { name: '导出文件' }));
   await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('导出失败'));
   const failedRequest = vi.mocked(window.desktop.exportNote).mock.calls.at(-1)!;
   await user.click(screen.getByRole('button', { name: '重新导出' }));
   await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('TXT 笔记已导出'));
   expect(vi.mocked(window.desktop.exportNote).mock.calls.at(-1)).toEqual(failedRequest);
   expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+});
+
+test('one polished browser File menu opens the format picker and supports Escape', async () => {
+  window.desktop.environment = 'browser';
+  const user = await start();
+  expect(screen.queryByText('保存在本机')).not.toBeInTheDocument();
+  await user.click(screen.getByRole('button', { name: '文件' }));
+  expect(screen.getAllByRole('menuitem').map(item => item.textContent)).toEqual(['新建笔记Ctrl N', '保存Ctrl S', '导入备份…', '导出…Ctrl ⇧ E']);
+  await user.keyboard('{Escape}'); expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+  await user.click(screen.getByRole('button', { name: '文件' }));
+  await user.click(screen.getByRole('menuitem', { name: /导出/ }));
+  expect(screen.getByRole('dialog', { name: '导出' })).toBeInTheDocument();
+  expect(screen.getByRole('radio', { name: '完整备份' })).toBeChecked();
+  await user.click(screen.getByRole('button', { name: '取消' }));
+});
+
+test('Ctrl+S prevents the browser save action and auto-save continues during typing', async () => {
+  const user = await start(); await user.click(screen.getByTestId('new-note'));
+  await waitFor(() => expect(screen.getByTestId('save-status')).toHaveTextContent('已保存'));
+  vi.mocked(window.desktop.save).mockClear();
+  const content = screen.getByTestId('content-input');
+  fireEvent.change(content, { target: { value: '立即保存' } });
+  expect(fireEvent.keyDown(content, { key: 's', ctrlKey: true })).toBe(false);
+  await waitFor(() => expect(window.desktop.save).toHaveBeenCalled());
+  vi.mocked(window.desktop.save).mockClear();
+  for (let index = 0; index < 8; index++) {
+    fireEvent.change(content, { target: { value: '持续输入' + index } });
+    await act(async () => { await new Promise(resolve => setTimeout(resolve, 80)); });
+    if (index === 4) expect(window.desktop.save).toHaveBeenCalled();
+  }
+  await waitFor(() => expect(screen.getByTestId('save-status')).toHaveTextContent('已保存'));
+  expect(vi.mocked(window.desktop.save).mock.calls.at(-1)![0].notes[0].content).toBe('持续输入7');
+});
+
+test('browser unload synchronously persists the most recent unsaved edit', async () => {
+  const user = await start(); window.desktop.saveBeforeUnload = vi.fn();
+  await user.click(screen.getByTestId('new-note'));
+  fireEvent.change(screen.getByTestId('content-input'), { target: { value: '刷新前的最后一个字' } });
+  fireEvent(window, new Event('beforeunload', { cancelable: true }));
+  expect(window.desktop.saveBeforeUnload).toHaveBeenCalledWith(expect.objectContaining({ notes: [expect.objectContaining({ content: '刷新前的最后一个字' })] }));
 });

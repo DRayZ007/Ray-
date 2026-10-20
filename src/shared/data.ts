@@ -7,7 +7,9 @@ const folderSchema = z.object({ id, name: z.string().trim().min(1), createdAt: t
 const noteSchema = z.object({ id, title: z.string(), content: z.string(), createdAt: timestamp, updatedAt: timestamp, pinned: z.boolean(), folderId: id.nullable() });
 const settingsSchema = z.object({
   appTitle: z.string().max(200).transform(value => value.trim() || 'Ray的笔记'), theme: z.enum(['light', 'dark', 'system']),
-  sidebarWidth: z.number().min(240).max(640), stackHeight: z.number().min(150).max(1200)
+  sidebarWidth: z.number().min(240).max(640), stackHeight: z.number().min(150).max(1200),
+  noteOrders: z.record(z.string(), z.array(id)).optional(),
+  noteSorts: z.record(z.string(), z.enum(['created', 'updated', 'title', 'manual'])).optional()
 });
 const dataSchema = z.object({ version: z.literal(1), notes: z.array(noteSchema), folders: z.array(folderSchema), settings: settingsSchema });
 export function emptyData(): AppData {

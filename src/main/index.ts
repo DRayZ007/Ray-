@@ -111,11 +111,8 @@ function installMenu() {
       { label: '新建笔记', accelerator: 'CmdOrCtrl+N', click: () => send('new') },
       { label: '保存', accelerator: 'CmdOrCtrl+S', click: () => send('save') },
       { type: 'separator' },
-      { label: '导出当前笔记', submenu: [
-        { label: 'Markdown（.md）…', click: () => send('export-markdown') },
-        { label: '纯文本（.txt）…', click: () => send('export-txt') }
-      ] },
-      { type: 'separator' }, { label: '导入 JSON 备份…', click: () => send('import') }, { label: '导出全部数据（JSON）…', click: () => send('export') },
+      { label: '导出…', accelerator: 'CmdOrCtrl+Shift+E', click: () => send('export') },
+      { type: 'separator' }, { label: '导入 JSON 备份…', click: () => send('import') },
       { type: 'separator' }, { label: '退出', accelerator: 'Alt+F4', click: () => window?.close() }
     ] },
     { label: '编辑', submenu: [ { role: 'undo', label: '撤销' }, { role: 'redo', label: '重做' }, { type: 'separator' }, { role: 'cut', label: '剪切' }, { role: 'copy', label: '复制' }, { role: 'paste', label: '粘贴' }, { role: 'selectAll', label: '全选' }, { type: 'separator' }, { label: '搜索笔记', accelerator: 'CmdOrCtrl+F', click: () => send('search') } ] },

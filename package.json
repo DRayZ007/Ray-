@@ -1,7 +1,7 @@
 {
   "name": "mark-notes",
   "productName": "马克笔记",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "private": true,
   "type": "module",
   "main": "out/main/index.js",
@@ -12,7 +12,7 @@
     "icons": "node scripts/icons.mjs",
     "preview:html": "node scripts/export-preview.mjs",
     "test": "vitest run",
-    "test:e2e": "npm run build && playwright test",
+    "test:e2e": "npm run build && npm run preview:html && playwright test",
     "build": "npm run icons && npm run typecheck && electron-vite build",
     "pack": "npm run build && electron-builder --win --x64 --dir",
     "dist": "npm run build && electron-builder --win nsis --x64",

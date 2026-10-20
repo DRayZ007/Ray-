@@ -10,13 +10,14 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - run: npm run preview:html
       - run: npm run verify
       - run: npm run dist
       - name: Test packaged executable
         shell: pwsh
         run: |
           $env:MARK_NOTES_EXECUTABLE = Join-Path $pwd 'release/win-unpacked/马克笔记.exe'
-          npx playwright test tests/desktop/smoke.spec.ts tests/desktop/export.spec.ts
+          npx playwright test tests/desktop/smoke.spec.ts tests/desktop/export.spec.ts tests/desktop/note-drag.spec.ts
       - name: Install and uninstall smoke
         shell: pwsh
         run: ./scripts/installer-smoke.ps1

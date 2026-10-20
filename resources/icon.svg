@@ -1,6 +1,19 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
-  <title id="title">马克笔记 · 折页 M</title>
-  <rect width="64" height="64" rx="14" fill="#7C5E2F"/>
-  <path d="M12 49V15h9l11 17 11-17h1l8 8v26H42V32L32 47 22 32v17Z" fill="#FFFDF7"/>
-  <path d="M44 15v8h8Z" fill="#D9CFB8"/>
+  <title id="title">马克笔记 · 皮革封面 N</title>
+  <defs>
+    <linearGradient id="cover" x1="0" y1="0" x2=".85" y2="1">
+      <stop stop-color="#B99560"/><stop offset=".46" stop-color="#876039"/><stop offset="1" stop-color="#51341F"/>
+    </linearGradient>
+    <linearGradient id="edge" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#E4CA9F"/><stop offset="1" stop-color="#53371F"/></linearGradient>
+    <linearGradient id="ivory" x1="0" y1="0" x2=".3" y2="1"><stop stop-color="#FFFFFA"/><stop offset=".55" stop-color="#F3ECD9"/><stop offset="1" stop-color="#D9C8A7"/></linearGradient>
+    <linearGradient id="spine"><stop stop-color="#322014" stop-opacity=".45"/><stop offset="1" stop-color="#322014" stop-opacity="0"/></linearGradient>
+    <filter id="emboss" x="-20%" y="-15%" width="140%" height="145%"><feDropShadow dx="0" dy="1.2" stdDeviation=".65" flood-color="#2D1B0F" flood-opacity=".65"/></filter>
+  </defs>
+  <rect x="2" y="3" width="60" height="60" rx="14" fill="#302115" opacity=".24"/>
+  <rect x="2" y="1" width="60" height="60" rx="14" fill="url(#cover)" stroke="url(#edge)"/>
+  <path d="M15 3H48Q60 3 60 15" fill="none" stroke="#F5E2BD" stroke-opacity=".38" stroke-linecap="round"/>
+  <path d="M12 5V57" stroke="#3B2516" stroke-opacity=".26" stroke-width="1.2"/>
+  <path d="M13 5H19V57H13Z" fill="url(#spine)"/>
+  <rect x="6" y="5" width="52" height="52" rx="10" fill="none" stroke="#EBD1A7" stroke-opacity=".18" stroke-width=".65"/>
+  <path d="M19 46V16H26L43 36V16H50V46H43L26 26V46Z" fill="url(#ivory)" stroke="#FFFAE9" stroke-opacity=".5" stroke-width=".5" stroke-linejoin="round" filter="url(#emboss)"/>
 </svg>

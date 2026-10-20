@@ -11,6 +11,13 @@ export async function fileMenuCommand(desktop: ElectronApplication, label: strin
     entry.click();
   }, label);
 }
+export async function exportViaMenu(desktop: ElectronApplication, notebook: Page, format: 'Markdown' | '纯文本' | '完整备份') {
+  await fileMenuCommand(desktop, '导出…');
+  await expect(notebook.getByRole('dialog', { name: '导出', exact: true })).toBeVisible();
+  await notebook.getByRole('radio', { name: format, exact: true }).check();
+  await notebook.getByRole('button', { name: '导出文件', exact: true }).click();
+  await expect(notebook.getByRole('dialog', { name: '导出', exact: true })).toHaveCount(0);
+}
 export async function launch(directory: string): Promise<ElectronApplication> {
   const env: Record<string, string> = Object.fromEntries(Object.entries({ ...process.env, MARK_NOTES_DATA_DIR: directory }).filter((entry): entry is [string, string] => entry[1] !== undefined));
   delete env.ELECTRON_RUN_AS_NODE;
