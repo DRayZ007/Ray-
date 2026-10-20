@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
+  <title id="title">马克笔记 · 折页 M</title>
+  <rect width="64" height="64" rx="14" fill="#7C5E2F"/>
+  <path d="M12 49V15h9l11 17 11-17h1l8 8v26H42V32L32 47 22 32v17Z" fill="#FFFDF7"/>
+  <path d="M44 15v8h8Z" fill="#D9CFB8"/>
+</svg>

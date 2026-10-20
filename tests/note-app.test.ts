@@ -1,7 +1,7 @@
-const test = require('node:test');
-const assert = require('node:assert/strict');
+import { test } from 'vitest';
+import assert from 'node:assert/strict';
 
-const NoteApp = require('../app.js');
+import * as NoteApp from '../src/shared/domain';
 
 test('createNote returns a complete note with deterministic overrides', () => {
   const note = NoteApp.createNote({
@@ -96,10 +96,10 @@ test('moveFolderInList changes parent and blocks invalid descendant moves', () =
   const folders = [root, child, grandchild, other];
 
   const moved = NoteApp.moveFolderInList(folders, 'child', 'other');
-  assert.equal(moved.find((folder) => folder.id === 'child').parentId, 'other');
+  assert.equal(moved.find((folder) => folder.id === 'child')!.parentId, 'other');
 
   const invalid = NoteApp.moveFolderInList(folders, 'root', 'grandchild');
-  assert.equal(invalid.find((folder) => folder.id === 'root').parentId, null);
+  assert.equal(invalid.find((folder) => folder.id === 'root')!.parentId, null);
 });
 
 test('folder storage helpers round-trip folder lists', () => {

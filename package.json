@@ -1,0 +1,78 @@
+{
+  "name": "mark-notes",
+  "productName": "马克笔记",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "out/main/index.js",
+  "scripts": {
+    "prebuild": "node node_modules/electron/install.js",
+    "dev": "electron-vite dev",
+    "typecheck": "tsc --noEmit",
+    "icons": "node scripts/icons.mjs",
+    "test": "vitest run",
+    "test:e2e": "npm run build && playwright test",
+    "build": "npm run icons && npm run typecheck && electron-vite build",
+    "pack": "npm run build && electron-builder --win --x64 --dir",
+    "dist": "npm run build && electron-builder --win nsis --x64",
+    "verify": "npm run test && npm run test:e2e"
+  },
+  "dependencies": {
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.56.1",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/node": "^24.9.1",
+    "@types/react": "^19.2.2",
+    "@types/react-dom": "^19.2.2",
+    "@vitejs/plugin-react": "^5.0.4",
+    "electron": "^44.9.1",
+    "electron-builder": "^26.15.3",
+    "electron-vite": "^5.0.0",
+    "jsdom": "^27.0.1",
+    "sharp": "^0.35.5",
+    "typescript": "^5.9.3",
+    "vite": "^7.1.10",
+    "vitest": "^4.1.12"
+  },
+  "build": {
+    "appId": "com.marknotes.desktop",
+    "electronDist": "node_modules/electron/dist",
+    "productName": "马克笔记",
+    "directories": {
+      "output": "release",
+      "buildResources": "resources"
+    },
+    "files": [
+      "out/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "resources/icon.png",
+        "to": "icon.png"
+      }
+    ],
+    "win": {
+      "icon": "resources/icon.ico",
+      "target": [
+        "nsis"
+      ],
+      "artifactName": "MarkNotes-${version}-${arch}-Setup.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "马克笔记",
+      "deleteAppDataOnUninstall": false
+    }
+  }
+}

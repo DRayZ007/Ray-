@@ -154,8 +154,31 @@ button {
 }
 
 .brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
   min-width: 0;
 }
+
+.brand-text { flex: 1; min-width: 0; }
+.app-logo { display: block; width: 32px; height: 32px; flex: none; }
+#root { height: 100%; }
+.app-fieldset { margin: 0; padding: 0; border: 0; min-width: 0; height: 100%; }
+.folder-main { display: flex; align-items: center; flex: 1; min-width: 0; gap: 8px; padding: 5px 8px; text-align: left; background: transparent; border: 0; cursor: pointer; }
+.folder-main .icon { width: 17px; height: 17px; flex: none; }
+.folder-toggle-spacer { width: 20px; flex: none; }
+.note-topline { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; }
+.note-topline .note-title { margin: 0; display: block; }
+.backup-actions { display: flex; align-items: center; gap: 8px; padding: 12px 18px; border-top: 1px solid var(--line); font-size: 12px; }
+.backup-actions button { padding: 6px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); cursor: pointer; }
+.backup-actions span { margin-left: auto; color: var(--muted); white-space: nowrap; }
+.error-banner, .notice { position: fixed; top: 8px; left: 50%; transform: translateX(-50%); z-index: 100; display: flex; align-items: center; gap: 12px; max-width: 85vw; padding: 12px 16px; background: var(--surface); color: var(--text); border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow); overflow-wrap: anywhere; }
+.error-banner { border-color: var(--danger); }
+.error-banner button, .notice button { flex: none; cursor: pointer; background: var(--surface); color: var(--text); border: 1px solid var(--line); border-radius: 4px; padding: 4px 8px; }
+.loading-screen { display: grid; height: 100vh; place-items: center; padding: 32px; }
+button:disabled { cursor: default; opacity: .5; }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 .eyebrow {
   margin: 0 0 3px;
@@ -700,7 +723,7 @@ button {
 }
 
 .list-empty {
-  display: none;
+  display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;

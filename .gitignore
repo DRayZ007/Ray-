@@ -2,6 +2,11 @@ node_modules/
 dist/
 build/
 coverage/
+out/
+release/
+test-results/
+playwright-report/
+.firecrawl/
 
 .DS_Store
 Thumbs.db
