@@ -14,9 +14,9 @@ npm run test:e2e
 npm run dist
 ```
 
-`npm run verify` 运行逻辑、存储、组件和 Electron 测试及生产构建。`npm run pack` 生成免安装目录；`npm run dist` 生成 `release/MarkNotes-1.0.2-x64-Setup.exe`。实际交付结果见 `VALIDATION.md`。
+`npm run verify` 运行逻辑、存储、组件和 Electron 测试及生产构建。`npm run pack` 生成免安装目录；`npm run dist` 生成 `release/MarkNotes-1.0.3-x64-Setup.exe`。实际交付结果见 `VALIDATION.md`。
 
-`resources/icon.svg` 为「皮革封面 N」唯一母版，以柔和皮革光影、书脊和象牙色压印字母增加实物质感。`npm run icons` 生成 PNG、多尺寸 ICO 和 `build/icon-preview.png`。应用左上角使用原始 SVG，窗口、任务栏、安装程序与快捷方式使用配套资源。
+`resources/icon.svg` 为「晨光 N」唯一母版，参考 iPhone 应用图标的简洁风格，采用连续圆润底板、暖橙渐变和柔白字母，辅以轻微光影。`npm run icons` 生成 PNG、多尺寸 ICO 和 `build/icon-preview.png`。应用左上角使用原始 SVG，窗口、任务栏、安装程序与快捷方式使用配套资源。
 
 ## 独立 HTML 展示
 

@@ -1,19 +1,20 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
-  <title id="title">马克笔记 · 皮革封面 N</title>
+  <title id="title">马克笔记 · 晨光 N</title>
   <defs>
-    <linearGradient id="cover" x1="0" y1="0" x2=".85" y2="1">
-      <stop stop-color="#B99560"/><stop offset=".46" stop-color="#876039"/><stop offset="1" stop-color="#51341F"/>
+    <linearGradient id="background" x1="12" y1="2" x2="48" y2="62" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFC966"/><stop offset=".48" stop-color="#F6A139"/><stop offset="1" stop-color="#E87928"/>
     </linearGradient>
-    <linearGradient id="edge" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#E4CA9F"/><stop offset="1" stop-color="#53371F"/></linearGradient>
-    <linearGradient id="ivory" x1="0" y1="0" x2=".3" y2="1"><stop stop-color="#FFFFFA"/><stop offset=".55" stop-color="#F3ECD9"/><stop offset="1" stop-color="#D9C8A7"/></linearGradient>
-    <linearGradient id="spine"><stop stop-color="#322014" stop-opacity=".45"/><stop offset="1" stop-color="#322014" stop-opacity="0"/></linearGradient>
-    <filter id="emboss" x="-20%" y="-15%" width="140%" height="145%"><feDropShadow dx="0" dy="1.2" stdDeviation=".65" flood-color="#2D1B0F" flood-opacity=".65"/></filter>
+    <linearGradient id="light" x1="32" y1="2" x2="32" y2="40" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF" stop-opacity=".18"/><stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="letter" x1="32" y1="17" x2="32" y2="47" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF"/><stop offset="1" stop-color="#FFF9EF"/>
+    </linearGradient>
+    <filter id="lift" x="-25%" y="-20%" width="150%" height="150%" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="1" stdDeviation=".8" flood-color="#A64D14" flood-opacity=".2"/>
+    </filter>
   </defs>
-  <rect x="2" y="3" width="60" height="60" rx="14" fill="#302115" opacity=".24"/>
-  <rect x="2" y="1" width="60" height="60" rx="14" fill="url(#cover)" stroke="url(#edge)"/>
-  <path d="M15 3H48Q60 3 60 15" fill="none" stroke="#F5E2BD" stroke-opacity=".38" stroke-linecap="round"/>
-  <path d="M12 5V57" stroke="#3B2516" stroke-opacity=".26" stroke-width="1.2"/>
-  <path d="M13 5H19V57H13Z" fill="url(#spine)"/>
-  <rect x="6" y="5" width="52" height="52" rx="10" fill="none" stroke="#EBD1A7" stroke-opacity=".18" stroke-width=".65"/>
-  <path d="M19 46V16H26L43 36V16H50V46H43L26 26V46Z" fill="url(#ivory)" stroke="#FFFAE9" stroke-opacity=".5" stroke-width=".5" stroke-linejoin="round" filter="url(#emboss)"/>
+  <path id="tile" d="M23 2H41C55 2 62 9 62 23V41C62 55 55 62 41 62H23C9 62 2 55 2 41V23C2 9 9 2 23 2Z" fill="url(#background)"/>
+  <path d="M23 2H41C55 2 62 9 62 23V41C62 55 55 62 41 62H23C9 62 2 55 2 41V23C2 9 9 2 23 2Z" fill="url(#light)"/>
+  <path d="M18 46V18H24L40 36V18H46V46H40L24 28V46Z" fill="url(#letter)" stroke="#FFFCF6" stroke-width="1.5" stroke-linejoin="round" filter="url(#lift)"/>
 </svg>
