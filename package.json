@@ -1,7 +1,7 @@
 {
   "name": "mark-notes",
   "productName": "马克笔记",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "private": true,
   "type": "module",
   "main": "out/main/index.js",
@@ -58,6 +58,10 @@
       {
         "from": "resources/icon.png",
         "to": "icon.png"
+      },
+      {
+        "from": "resources/icon.ico",
+        "to": "icon-${version}.ico"
       }
     ],
     "win": {
@@ -68,6 +72,7 @@
       "artifactName": "MarkNotes-${version}-${arch}-Setup.${ext}"
     },
     "nsis": {
+      "include": "resources/installer.nsh",
       "oneClick": false,
       "perMachine": false,
       "allowToChangeInstallationDirectory": true,

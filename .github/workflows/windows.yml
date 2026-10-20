@@ -13,6 +13,9 @@ jobs:
       - run: npm run preview:html
       - run: npm run verify
       - run: npm run dist
+      - name: Shortcut icon upgrade hook
+        shell: pwsh
+        run: ./scripts/test-shortcut-icons.ps1
       - name: Test packaged executable
         shell: pwsh
         run: |
@@ -30,3 +33,4 @@ jobs:
             playwright-report/
             release/*Setup.exe
             build/icon-preview.png
+            build/shortcut-tests/

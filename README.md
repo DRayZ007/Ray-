@@ -14,9 +14,11 @@ npm run test:e2e
 npm run dist
 ```
 
-`npm run verify` 运行逻辑、存储、组件和 Electron 测试及生产构建。`npm run pack` 生成免安装目录；`npm run dist` 生成 `release/MarkNotes-1.0.6-x64-Setup.exe`。实际交付结果见 `VALIDATION.md`。
+`npm run verify` 运行逻辑、存储、组件和 Electron 测试及生产构建。`npm run pack` 生成免安装目录；`npm run dist` 生成 `release/MarkNotes-1.0.7-x64-Setup.exe`。实际交付结果见 `VALIDATION.md`。
 
 `resources/icon.svg` 为「页间 N」唯一母版，以折叠纸带构成字母 N，使用蓝绿与鼠尾草绿的实心色块、纸白底板表达书写和知识整理；无字体、渐变或滤镜依赖。设计参考 [语雀](https://www.yuque.com/)、[Notion](https://apps.apple.com/us/app/notion-notes-tasks-ai/id1232780281) 和 [Typora](https://typora.io/) 的简洁品牌符号方向，具体路径为本项目绘制。`npm run icons` 生成 PNG、多尺寸 ICO 和 `build/icon-preview.png`。应用左上角使用原始 SVG，窗口、任务栏、安装程序与快捷方式使用配套资源。
+
+安装包将独立图标保存为 `resources/icon-<版本>.ico`，桌面和开始菜单快捷方式直接引用该文件。安装及升级后重写已有快捷方式的图标引用并通知 Windows 刷新，避免同一路径 exe 的旧图标缓存；不恢复用户已经删除的快捷方式。旧版安装可在 PowerShell 7 中运行 `./scripts/repair-shortcut-icon.ps1 -InstallDirectory 'C:/Program Files/mark-notes'` 单独修复，无需重装；脚本只处理指向该安装的快捷方式，先备份再更新并验证。公共桌面或 Program Files 安装需使用管理员权限，可先加 `-WhatIf` 查看操作。
 
 ## 独立 HTML 展示
 
@@ -50,4 +52,4 @@ npm run dist
 
 Windows CI 会构建安装包，测试打包后的 exe，并上传测试报告和图标预览。安装程序、桌面快捷方式、系统任务栏及不同 DPI 的最终检查需在实际 Windows 桌面完成。
 
-`./scripts/installer-smoke.ps1` 在工作区临时目录安装、检查快捷方式和嵌入图标、测试安装后的程序，随后卸载；会拒绝覆盖已有同名安装或快捷方式。系统原生 DPI 与任务栏的最终外观仍需人工确认，自动化覆盖的是应用 100%、150%、200% 缩放和资源完整性。
+`./scripts/test-shortcut-icons.ps1` 在工作区隔离目录编译并运行生产 NSIS 快捷方式钩子，验证旧图标引用更新、AppUserModelID 保留及已删除快捷方式不被重建。`./scripts/installer-smoke.ps1` 在工作区临时目录安装、检查快捷方式和嵌入图标、模拟旧图标快捷方式后重新安装验证升级，测试安装后的程序，随后卸载；会拒绝覆盖当前用户或全局已有的同名安装或快捷方式。系统原生 DPI 与任务栏的最终外观仍需人工确认，自动化覆盖的是应用 100%、150%、200% 缩放和资源完整性。
