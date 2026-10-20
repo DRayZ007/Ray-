@@ -2,6 +2,7 @@ import { createRoot } from 'react-dom/client';
 import { App } from '../renderer/src/App';
 import '../renderer/src/styles.css';
 import { emptyData, mergeData, validateData } from '../shared/data';
+import { noteExport } from '../shared/export';
 import type { AppData, DesktopAPI } from '../shared/types';
 
 // This adapter is only bundled into the standalone presentation HTML, never the desktop app.
@@ -19,12 +20,13 @@ function demonstration(): AppData {
 }
 let current = demonstration();
 let pending: { token: string; data: AppData } | null = null;
-function download(data: AppData) {
-  const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
-  const anchor = document.createElement('a'); anchor.href = url; anchor.download = '马克笔记-预览备份.json';
+function download(content: string, filename: string, mime: string) {
+  const url = URL.createObjectURL(new Blob([content], { type: mime }));
+  const anchor = document.createElement('a'); anchor.href = url; anchor.download = filename;
   document.body.append(anchor); anchor.click(); anchor.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 const api: DesktopAPI = {
+  environment: 'browser',
   async load() {
     const raw = localStorage.getItem(storageKey);
     if (raw) current = validateData(JSON.parse(raw));
@@ -56,7 +58,13 @@ const api: DesktopAPI = {
     localStorage.setItem(storageKey + ':before-import', JSON.stringify(current));
     await api.save(merged); pending = null; return structuredClone(merged);
   },
-  async exportData() { download(current); return true; },
+  async exportData() { download(JSON.stringify(current, null, 2), '马克笔记-预览备份.json', 'application/json'); return true; },
+  async exportNote(noteId, format) {
+    const note = current.notes.find(item => item.id === noteId);
+    if (!note) throw new Error('请重新选择要导出的笔记');
+    const exported = noteExport(note, format);
+    download(exported.content, exported.filename, exported.mime); return true;
+  },
   async openExternal(value) {
     const url = new URL(value);
     if (!['https:', 'http:', 'mailto:'].includes(url.protocol)) throw new Error('不支持的链接协议');

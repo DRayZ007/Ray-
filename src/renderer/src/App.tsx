@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { CSSProperties, FormEvent, PointerEvent } from 'react';
-import type { Folder, ImportPreview, MenuCommand, Note } from '../../shared/types';
+import type { Folder, ImportPreview, MenuCommand, Note, NoteExportFormat } from '../../shared/types';
 import { createFolder, createNote, deleteNote, filterNotes, getFolderPath, isDescendantFolder, moveFolderInList, notesForFolder, removeFolderTree, sortNotes, updateNote } from '../../shared/domain';
 import type { SortMode } from '../../shared/domain';
 import { useNotebook } from './useNotebook';
@@ -9,6 +9,7 @@ import { FolderTree } from './FolderTree';
 import { NoteList } from './NoteList';
 import { Editor } from './Editor';
 import { Modal } from './Modal';
+import { BrowserMenu } from './BrowserMenu';
 import logo from '../../../resources/icon.svg';
 
 export function App() {
@@ -21,6 +22,7 @@ export function App() {
   const [deleting, setDeleting] = useState<{ type: 'note' | 'folder'; id: string } | null>(null);
   const [preview, setPreview] = useState<ImportPreview | null>(null);
   const [busy, setBusy] = useState(false), [notice, setNotice] = useState('');
+  const [exportFailure, setExportFailure] = useState<{ message: string; format: NoteExportFormat | 'backup'; noteId: string | null } | null>(null);
   const locked = useRef(false), search = useRef<HTMLInputElement>(null), initialSelection = useRef(false);
   const notebook = useRef({ flush }); notebook.current = { flush };
   const [systemDark, setSystemDark] = useState(() => window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false);
@@ -45,17 +47,24 @@ export function App() {
     requestAnimationFrame(() => { const title = document.querySelector<HTMLInputElement>('[data-testid="title-input"]'); title?.focus(); title?.select(); });
   }
   function toggleTheme() { change(value => ({ ...value, settings: { ...value.settings, theme: theme === 'dark' ? 'light' : 'dark' } })); }
-  async function exclusive(action: () => Promise<void>) {
+  async function exclusive(action: () => Promise<void>, onError: (reason: unknown) => void = reason => setError(String(reason))) {
     if (locked.current) return;
     locked.current = true; setBusy(true); setNotice('');
-    try { await action(); } catch (reason) { setError(String(reason)); }
+    try { await action(); } catch (reason) { onError(reason); }
     finally { locked.current = false; setBusy(false); }
   }
   async function beginImport() {
     await exclusive(async () => { await flush(); const result = await window.desktop.previewImport(); setPreview(result); });
   }
-  async function exportData() {
-    await exclusive(async () => { await flush(); if (await window.desktop.exportData()) setNotice('备份已导出'); });
+  async function exportData(format: NoteExportFormat | 'backup', noteId: string | null = active) {
+    if (format !== 'backup' && !noteId) { setNotice('请先选择一条笔记，再导出'); return; }
+    setExportFailure(null);
+    let saved = false;
+    await exclusive(async () => {
+      await flush(); saved = true;
+      const success = format === 'backup' ? await window.desktop.exportData() : await window.desktop.exportNote(noteId!, format);
+      if (success) setNotice(format === 'backup' ? 'JSON 完整备份已导出' : format === 'markdown' ? 'Markdown 笔记已导出' : 'TXT 笔记已导出');
+    }, reason => { if (saved) setExportFailure({ message: String(reason), format, noteId }); });
   }
   const commandHandler = useRef<(command: MenuCommand) => void>(() => {});
   commandHandler.current = command => {
@@ -65,7 +74,9 @@ export function App() {
     if (command === 'search') { search.current?.focus(); search.current?.select(); }
     if (command === 'theme') toggleTheme();
     if (command === 'import') void beginImport();
-    if (command === 'export') void exportData();
+    if (command === 'export') void exportData('backup');
+    if (command === 'export-markdown') void exportData('markdown');
+    if (command === 'export-txt') void exportData('txt');
   };
   useEffect(() => window.desktop.onCommand(command => commandHandler.current(command)), []);
   useEffect(() => window.desktop.onCloseRequested(async () => {
@@ -121,8 +132,10 @@ export function App() {
   if (!ready) return <div className="loading-screen" role={error ? 'alert' : 'status'}>{error || '正在打开笔记…'}</div>;
   return <>
     {error && <div className="error-banner" role="alert">{error}<button onClick={() => { void flush().catch(() => {}); }}>重试保存</button><button aria-label="关闭错误提示" onClick={() => setError('')}>×</button></div>}
+    {!error && exportFailure && <div className="error-banner" role="alert">导出失败：{exportFailure.message}<button disabled={busy} onClick={() => { void exportData(exportFailure.format, exportFailure.noteId); }}>重新导出</button><button aria-label="关闭错误提示" onClick={() => setExportFailure(null)}>×</button></div>}
     {notice && <div className="notice" role="status">{notice}<button aria-label="关闭提示" onClick={() => setNotice('')}>×</button></div>}
-    <fieldset className="app-fieldset" disabled={busy || !!preview} aria-busy={busy}>
+    {window.desktop.environment === 'browser' && <BrowserMenu command={command => commandHandler.current(command)} disabled={busy || !!preview || !!editing || !!deleting} />}
+    <fieldset className={`app-fieldset ${window.desktop.environment === 'browser' ? 'browser-layout' : ''}`} disabled={busy || !!preview} aria-busy={busy}>
       <div className="app-shell" inert={busy || !!preview || !!editing || !!deleting} style={{ '--sidebar-width': `${data.settings.sidebarWidth}px`, '--stack-top-height': `${data.settings.stackHeight}px` } as CSSProperties} onPointerDown={() => { if (context) setContext(null); }}>
         <aside className="sidebar" aria-label="笔记列表"><header className="sidebar-header"><div className="brand"><img className="app-logo" src={logo} width="32" height="32" alt="" data-testid="app-logo" /><div className="brand-text"><p className="eyebrow">NOTES</p><input className="app-title-input" aria-label="笔记名称" data-testid="app-title-input" value={data.settings.appTitle} maxLength={200} onChange={event => change(value => ({ ...value, settings: { ...value.settings, appTitle: event.target.value } }))} onBlur={() => { if (!data.settings.appTitle.trim()) change(value => ({ ...value, settings: { ...value.settings, appTitle: 'Ray的笔记' } })); }} /></div></div>
           <div className="header-actions"><button className="icon-button" aria-label={theme === 'dark' ? '切换浅色模式' : '切换暗黑模式'} data-testid="theme-toggle" onClick={toggleTheme}><Icon name={theme === 'dark' ? 'sun' : 'moon'} /></button><button className="icon-button primary" aria-label="新建笔记" title="新建笔记 (Ctrl+N)" data-testid="new-note" onClick={newNote}><Icon name="plus" /></button></div></header>
@@ -133,7 +146,7 @@ export function App() {
           </section>
           <div className="list-toolbar"><span className="note-count" data-testid="note-count">{visible.length} 条笔记</span><select className="sort-select" aria-label="排序方式" data-testid="sort-select" value={sort} onChange={event => setSort(event.target.value as SortMode)}><option value="updated">最近编辑</option><option value="created">创建时间</option><option value="title">文字排序</option></select></div>
           <NoteList notes={visible} folders={data.folders} activeId={active} select={id => { setActive(id); setMode('edit'); }} pin={pin} query={query} />
-          <footer className="backup-actions"><button onClick={() => { void beginImport(); }} data-testid="import-button">导入备份</button><button onClick={() => { void exportData(); }} data-testid="export-button">导出备份</button><span>{busy ? '处理中…' : '保存在本机'}</span></footer>
+          <footer className="storage-status"><span>{busy ? '处理中…' : '保存在本机'}</span></footer>
         </aside>
         <div className="resizer" role="separator" aria-label="调整笔记列表宽度" aria-orientation={window.innerWidth <= 760 ? 'horizontal' : 'vertical'} tabIndex={0} data-testid="resizer" onPointerDown={event => { if (!busy) { event.preventDefault(); event.currentTarget.setPointerCapture(event.pointerId); } }} onPointerMove={pointerResize} onPointerUp={event => { if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId); }} onDoubleClick={() => resize(window.innerWidth <= 760 ? 340 : 340, window.innerWidth <= 760)} onKeyDown={event => {
           const vertical = window.innerWidth <= 760;

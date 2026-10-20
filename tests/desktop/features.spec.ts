@@ -1,4 +1,4 @@
-import { test, expect } from './fixtures';
+import { test, expect, fileMenuCommand } from './fixtures';
 import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { emptyData } from '../../src/shared/data';
@@ -38,14 +38,14 @@ test('native import/export, conflict preservation, repeated import and invalid f
     dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [input] });
     dialog.showSaveDialog = async () => ({ canceled: false, filePath: output });
   }, { input, output });
-  async function importFile() { await notebook.getByTestId('import-button').click(); await expect(notebook.getByRole('dialog', { name: '确认导入' })).toBeVisible(); await notebook.getByRole('button', { name: '确认导入', exact: true }).click(); await expect(notebook.getByRole('dialog')).toHaveCount(0); }
+  async function importFile() { await fileMenuCommand(desktop, '导入 JSON 备份…'); await expect(notebook.getByRole('dialog', { name: '确认导入' })).toBeVisible(); await notebook.getByRole('button', { name: '确认导入', exact: true }).click(); await expect(notebook.getByRole('dialog')).toHaveCount(0); }
   await importFile(); await expect(notebook.getByTestId('note-item')).toHaveCount(1);
   await notebook.getByTestId('content-input').fill('本地修改');
   await importFile(); await expect(notebook.getByTestId('note-item')).toHaveCount(2);
   await importFile(); await expect(notebook.getByTestId('note-item')).toHaveCount(2);
-  await notebook.getByTestId('export-button').click(); await expect(notebook.getByRole('status')).toHaveText(/备份已导出/);
+  await fileMenuCommand(desktop, '导出全部数据（JSON）…'); await expect(notebook.getByRole('status')).toHaveText(/JSON 完整备份已导出/);
   const exported = JSON.parse(await readFile(output, 'utf8')); expect(exported.notes.map((note: { content: string }) => note.content).sort()).toEqual(['外部原稿', '本地修改'].sort());
-  await writeFile(input, '{broken'); await notebook.getByTestId('import-button').click(); await expect(notebook.getByRole('alert')).toBeVisible(); await expect(notebook.getByTestId('note-item')).toHaveCount(2);
+  await writeFile(input, '{broken'); await fileMenuCommand(desktop, '导入 JSON 备份…'); await expect(notebook.getByRole('alert')).toBeVisible(); await expect(notebook.getByTestId('note-item')).toHaveCount(2);
   const { rm } = await import('node:fs/promises'); await rm(output, { force: true });
 });
 

@@ -12,8 +12,9 @@ beforeEach(() => {
   const media = { matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn() };
   vi.stubGlobal('matchMedia', () => media);
   window.desktop = {
+    environment: 'desktop',
     load: vi.fn().mockResolvedValue(emptyData()), save: vi.fn().mockResolvedValue(undefined),
-    previewImport: vi.fn().mockResolvedValue(null), confirmImport: vi.fn(), exportData: vi.fn().mockResolvedValue(true), openExternal: vi.fn(),
+    previewImport: vi.fn().mockResolvedValue(null), confirmImport: vi.fn(), exportData: vi.fn().mockResolvedValue(true), exportNote: vi.fn().mockResolvedValue(true), openExternal: vi.fn(),
     onCommand: callback => { command = callback; return () => {}; },
     onCloseRequested: callback => { closeRequested = callback; return () => {}; }
   };
@@ -76,8 +77,41 @@ test('folder attributes, theme, title, menus and import cancellation work', asyn
   await user.clear(screen.getByTestId('app-title-input')); await user.type(screen.getByTestId('app-title-input'), '工作笔记'); expect(document.title).toBe('工作笔记');
   act(() => command('search')); expect(screen.getByTestId('search-input')).toHaveFocus();
   vi.mocked(window.desktop.previewImport).mockResolvedValue({ token: 't', notes: 2, folders: 1, conflicts: 1, skipped: 0 });
-  await user.click(screen.getByTestId('import-button')); expect(await screen.findByRole('dialog', { name: '确认导入' })).toHaveTextContent('新增 2 条笔记');
+  act(() => command('import')); expect(await screen.findByRole('dialog', { name: '确认导入' })).toHaveTextContent('新增 2 条笔记');
   await user.click(screen.getByRole('button', { name: '取消' })); expect(window.desktop.confirmImport).not.toHaveBeenCalled();
   await act(async () => { await closeRequested(); });
   const saved: AppData = vi.mocked(window.desktop.save).mock.calls.at(-1)![0]; expect(saved.settings.theme).toBe('dark'); expect(saved.folders[0].name).toBe('项目');
+});
+
+test('desktop removes duplicate footer controls and exports selected note after saving', async () => {
+  const user = await start();
+  expect(screen.queryByTestId('import-button')).not.toBeInTheDocument();
+  expect(screen.queryByTestId('export-button')).not.toBeInTheDocument();
+  act(() => command('export-markdown'));
+  expect(screen.getByRole('status')).toHaveTextContent('请先选择');
+  expect(window.desktop.exportNote).not.toHaveBeenCalled();
+  await user.click(screen.getByTestId('new-note'));
+  fireEvent.change(screen.getByTestId('content-input'), { target: { value: '刚输入的内容' } });
+  act(() => command('export-markdown'));
+  await waitFor(() => expect(window.desktop.exportNote).toHaveBeenCalledWith(expect.any(String), 'markdown'));
+  const calls = vi.mocked(window.desktop.save).mock.calls;
+  expect(calls.at(-1)![0].notes[0].content).toBe('刚输入的内容');
+  expect(vi.mocked(window.desktop.save).mock.invocationCallOrder.at(-1)!).toBeLessThan(vi.mocked(window.desktop.exportNote).mock.invocationCallOrder[0]);
+  await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Markdown 笔记已导出'));
+});
+
+test('cancelled export has no success message, failed export retries the same note and format', async () => {
+  const user = await start(); await user.click(screen.getByTestId('new-note'));
+  vi.mocked(window.desktop.exportNote).mockResolvedValueOnce(false);
+  act(() => command('export-txt'));
+  await waitFor(() => expect(window.desktop.exportNote).toHaveBeenCalledTimes(1));
+  expect(screen.queryByRole('status')).not.toBeInTheDocument();
+  vi.mocked(window.desktop.exportNote).mockRejectedValueOnce(new Error('没有权限写入此位置'));
+  act(() => command('export-txt'));
+  await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('导出失败'));
+  const failedRequest = vi.mocked(window.desktop.exportNote).mock.calls.at(-1)!;
+  await user.click(screen.getByRole('button', { name: '重新导出' }));
+  await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('TXT 笔记已导出'));
+  expect(vi.mocked(window.desktop.exportNote).mock.calls.at(-1)).toEqual(failedRequest);
+  expect(screen.queryByRole('alert')).not.toBeInTheDocument();
 });

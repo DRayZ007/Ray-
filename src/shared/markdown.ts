@@ -15,6 +15,11 @@
     return /^(https?:|mailto:|#)/i.test(url) ? escapeHtml(url) : '#';
   }
 
+  function decodeEscapedText(value: string): string {
+    const entities: Record<string, string> = { '&amp;': '&', '&lt;': '<', '&gt;': '>', '&quot;': '"', '&#39;': "'" };
+    return value.replace(/&(?:amp|lt|gt|quot|#39);/g, entity => entities[entity]);
+  }
+
   function renderMarkdownInline(text: string): string {
     var placeholders: string[] = [];
 
@@ -38,8 +43,8 @@
 
     html = html.replace(/\[([^\]]+)\]\(([^)\s]+)(?:\s+".*?")?\)/g, function (match, label, url) {
       return stash(
-        '<a href="' + sanitizeUrl(url) + '" target="_blank" rel="noopener noreferrer">' +
-          renderMarkdownInline(label) +
+        '<a href="' + sanitizeUrl(decodeEscapedText(url)) + '" target="_blank" rel="noopener noreferrer">' +
+          renderMarkdownInline(decodeEscapedText(label)) +
           '</a>'
       );
     });
@@ -143,7 +148,7 @@
             break;
           }
 
-          items.push('<li>' + renderMarkdownInline(listMatch[2]) + '</li>');
+          items.push('<li>' + renderMarkdownInline(listMatch[unordered ? 2 : 1]) + '</li>');
           index += 1;
         }
 

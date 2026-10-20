@@ -7,6 +7,7 @@ import { writeFileSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import { DataStore, RecoveryRequired } from './store';
 import { mergeData, validateData } from '../shared/data';
+import { noteExport } from '../shared/export';
 import type { AppData, MenuCommand } from '../shared/types';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -27,6 +28,21 @@ function trusted(event: IpcMainInvokeEvent | Electron.IpcMainEvent): void {
   if (!window || event.sender !== window.webContents || event.senderFrame !== window.webContents.mainFrame || !allowed) throw new Error('拒绝不受信任的请求');
 }
 function send(command: MenuCommand) { if (rendererReady && window && !window.isDestroyed()) window.webContents.send('app:command', command); }
+async function saveExportFile(filePath: string, content: string): Promise<void> {
+  const selected = path.resolve(filePath);
+  if (selected.toLowerCase().startsWith(path.resolve(store.directory).toLowerCase() + path.sep)) throw new Error('请导出到应用数据目录以外的位置');
+  try { await writeFile(selected, content, 'utf8'); }
+  catch (error) {
+    const messages: Record<string, string> = {
+      EACCES: '没有权限写入此位置，请选择“文档”或其他可写文件夹。',
+      EPERM: '没有权限写入此位置，请选择“文档”或其他可写文件夹。',
+      ENOSPC: '磁盘空间不足，请释放空间或选择其他磁盘。',
+      ENOENT: '目标文件夹不存在，请重新选择导出位置。',
+      EISDIR: '导出位置是文件夹，请选择有效的文件名。'
+    };
+    throw new Error(messages[(error as NodeJS.ErrnoException).code ?? ''] ?? `无法写入文件：${String(error)}`);
+  }
+}
 function registerIPC() {
   ipcMain.handle('data:load', event => { trusted(event); rendererReady = true; return loaded; });
   ipcMain.handle('data:save', async (event, data: unknown) => { trusted(event); await store.save(data); loaded = store.snapshot(); });
@@ -53,12 +69,26 @@ function registerIPC() {
   });
   ipcMain.handle('data:export', async event => {
     trusted(event); await store.drain();
-    const result = await dialog.showSaveDialog(window!, { title: '导出笔记备份', defaultPath: `马克笔记-${new Date().toISOString().slice(0, 10)}.json`, filters: [{ name: '笔记备份', extensions: ['json'] }] });
+    const result = await dialog.showSaveDialog(window!, { title: '导出全部数据（JSON）', defaultPath: path.join(app.getPath('documents'), `马克笔记-${new Date().toISOString().slice(0, 10)}.json`), filters: [{ name: 'JSON 完整备份', extensions: ['json'] }] });
     if (result.canceled || !result.filePath) return false;
     // No renderer-controlled arbitrary write path; the path comes from the OS dialog.
-    const selected = path.resolve(result.filePath);
-    if (selected.toLowerCase().startsWith(path.resolve(store.directory).toLowerCase() + path.sep)) throw new Error('请导出到应用数据目录以外的位置');
-    await writeFile(selected, JSON.stringify(store.snapshot(), null, 2), 'utf8'); return true;
+    await saveExportFile(result.filePath, JSON.stringify(store.snapshot(), null, 2)); return true;
+  });
+  ipcMain.handle('note:export', async (event, noteId: unknown, format: unknown) => {
+    trusted(event);
+    if (typeof noteId !== 'string' || (format !== 'markdown' && format !== 'txt')) throw new Error('无效的笔记导出请求');
+    await store.drain();
+    const note = store.snapshot().notes.find(item => item.id === noteId);
+    if (!note) throw new Error('笔记不存在，请重新选择要导出的笔记');
+    const exported = noteExport(note, format);
+    const extension = format === 'markdown' ? 'md' : 'txt';
+    const result = await dialog.showSaveDialog(window!, {
+      title: format === 'markdown' ? '导出当前笔记为 Markdown' : '导出当前笔记为 TXT',
+      defaultPath: path.join(app.getPath('documents'), exported.filename),
+      filters: [{ name: format === 'markdown' ? 'Markdown 文档' : '纯文本文档', extensions: [extension] }]
+    });
+    if (result.canceled || !result.filePath) return false;
+    await saveExportFile(result.filePath, exported.content); return true;
   });
   ipcMain.handle('app:external', async (event, value: unknown) => {
     trusted(event);
@@ -80,7 +110,12 @@ function installMenu() {
     { label: '文件', submenu: [
       { label: '新建笔记', accelerator: 'CmdOrCtrl+N', click: () => send('new') },
       { label: '保存', accelerator: 'CmdOrCtrl+S', click: () => send('save') },
-      { type: 'separator' }, { label: '导入备份…', click: () => send('import') }, { label: '导出备份…', click: () => send('export') },
+      { type: 'separator' },
+      { label: '导出当前笔记', submenu: [
+        { label: 'Markdown（.md）…', click: () => send('export-markdown') },
+        { label: '纯文本（.txt）…', click: () => send('export-txt') }
+      ] },
+      { type: 'separator' }, { label: '导入 JSON 备份…', click: () => send('import') }, { label: '导出全部数据（JSON）…', click: () => send('export') },
       { type: 'separator' }, { label: '退出', accelerator: 'Alt+F4', click: () => window?.close() }
     ] },
     { label: '编辑', submenu: [ { role: 'undo', label: '撤销' }, { role: 'redo', label: '重做' }, { type: 'separator' }, { role: 'cut', label: '剪切' }, { role: 'copy', label: '复制' }, { role: 'paste', label: '粘贴' }, { role: 'selectAll', label: '全选' }, { type: 'separator' }, { label: '搜索笔记', accelerator: 'CmdOrCtrl+F', click: () => send('search') } ] },

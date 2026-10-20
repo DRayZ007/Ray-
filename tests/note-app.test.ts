@@ -216,6 +216,14 @@ test('parseMarkdown escapes raw HTML and unsafe links', () => {
   assert.doesNotMatch(html, /javascript:/);
 });
 
+test('parseMarkdown keeps ordered list text and escapes link entities exactly once', () => {
+  const html = NoteApp.parseMarkdown('1. 第一步\n2. **第二步**\n\n[文档 & 说明](https://example.com?a=1&b=2)');
+  assert.match(html, /<ol><li>第一步<\/li><li><strong>第二步<\/strong><\/li><\/ol>/);
+  assert.match(html, /href="https:\/\/example.com\?a=1&amp;b=2"/);
+  assert.match(html, />文档 &amp; 说明<\/a>/);
+  assert.doesNotMatch(html, /&amp;amp;/);
+});
+
 test('storage helpers round-trip valid notes and reject invalid payloads', () => {
   const storage = NoteApp.createMemoryStorage();
   const notes = [NoteApp.createNote({ id: 'a', title: '保存测试' })];

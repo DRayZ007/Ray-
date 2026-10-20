@@ -3,6 +3,14 @@ import type { ElectronApplication, Page } from '@playwright/test';
 import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 export { expect };
+export async function fileMenuCommand(desktop: ElectronApplication, label: string): Promise<void> {
+  await desktop.evaluate(({ Menu }, label) => {
+    const items = Menu.getApplicationMenu()!.items[0].submenu!.items;
+    const entry = items.flatMap(item => item.submenu ? item.submenu.items : [item]).find(item => item.label === label);
+    if (!entry) throw new Error(`File menu item missing: ${label}`);
+    entry.click();
+  }, label);
+}
 export async function launch(directory: string): Promise<ElectronApplication> {
   const env: Record<string, string> = Object.fromEntries(Object.entries({ ...process.env, MARK_NOTES_DATA_DIR: directory }).filter((entry): entry is [string, string] => entry[1] !== undefined));
   delete env.ELECTRON_RUN_AS_NODE;

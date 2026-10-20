@@ -170,9 +170,14 @@ button {
 .folder-toggle-spacer { width: 20px; flex: none; }
 .note-topline { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; }
 .note-topline .note-title { margin: 0; display: block; }
-.backup-actions { display: flex; align-items: center; gap: 8px; padding: 12px 18px; border-top: 1px solid var(--line); font-size: 12px; }
-.backup-actions button { padding: 6px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); cursor: pointer; }
-.backup-actions span { margin-left: auto; color: var(--muted); white-space: nowrap; }
+.storage-status { padding: 12px 18px; border-top: 1px solid var(--line); font-size: 12px; color: var(--muted); text-align: right; }
+.browser-menubar { position: fixed; z-index: 40; top: 0; left: 0; right: 0; height: 32px; background: var(--surface); border-bottom: 1px solid var(--line); }
+.browser-menubar summary { padding: 4px 16px; width: fit-content; cursor: pointer; }
+.browser-menubar [role="menu"] { width: max-content; padding: 6px; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; box-shadow: var(--shadow); }
+.browser-menubar button { display: block; width: 100%; padding: 8px 12px; border: 0; background: transparent; color: var(--text); text-align: left; cursor: pointer; }
+.browser-menubar button:hover { background: var(--hover); }
+.browser-layout .app-shell { padding-top: 32px; }
+.browser-layout .sidebar, .browser-layout .editor-pane { height: 100%; }
 .error-banner, .notice { position: fixed; top: 8px; left: 50%; transform: translateX(-50%); z-index: 100; display: flex; align-items: center; gap: 12px; max-width: 85vw; padding: 12px 16px; background: var(--surface); color: var(--text); border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow); overflow-wrap: anywhere; }
 .error-banner { border-color: var(--danger); }
 .error-banner button, .notice button { flex: none; cursor: pointer; background: var(--surface); color: var(--text); border: 1px solid var(--line); border-radius: 4px; padding: 4px 8px; }

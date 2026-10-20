@@ -1,6 +1,7 @@
 $ErrorActionPreference = 'Stop'
 $workspaceRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
-$installer = Join-Path $workspaceRoot 'release/MarkNotes-1.0.0-x64-Setup.exe'
+$version = (Get-Content -Raw (Join-Path $workspaceRoot 'package.json') | ConvertFrom-Json).version
+$installer = Join-Path $workspaceRoot "release/MarkNotes-$version-x64-Setup.exe"
 $installRoot = [IO.Path]::GetFullPath((Join-Path $workspaceRoot 'build/installer-smoke/installed'))
 if (-not $installRoot.StartsWith($workspaceRoot + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)) { throw 'Installation path escaped workspace' }
 if (Test-Path -LiteralPath $installRoot) { throw 'Smoke installation directory already exists; inspect it before retrying.' }

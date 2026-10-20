@@ -17,6 +17,6 @@ document.querySelector('#export').addEventListener('click', () => {
     const url = URL.createObjectURL(new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' }));
     const anchor = document.createElement('a'); anchor.href = url; anchor.download = '马克笔记-旧版备份.json';
     document.body.append(anchor); anchor.click(); anchor.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
-    result.textContent = `已导出 ${notes.length} 条笔记、${folders.length} 个文件夹。请在桌面客户端中选择“导入备份”。`;
+    result.textContent = `已导出 ${notes.length} 条笔记、${folders.length} 个文件夹。请在桌面客户端中选择“文件 → 导入 JSON 备份”。`;
   } catch (error) { result.textContent = '导出失败，原数据未修改：' + String(error); }
 });

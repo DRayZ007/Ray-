@@ -16,7 +16,7 @@ jobs:
         shell: pwsh
         run: |
           $env:MARK_NOTES_EXECUTABLE = Join-Path $pwd 'release/win-unpacked/马克笔记.exe'
-          npx playwright test tests/desktop/smoke.spec.ts
+          npx playwright test tests/desktop/smoke.spec.ts tests/desktop/export.spec.ts
       - name: Install and uninstall smoke
         shell: pwsh
         run: ./scripts/installer-smoke.ps1

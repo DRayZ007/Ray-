@@ -1,11 +1,13 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import type { DesktopAPI, MenuCommand } from '../shared/types';
 const api: DesktopAPI = {
+  environment: 'desktop',
   load: () => ipcRenderer.invoke('data:load'),
   save: data => ipcRenderer.invoke('data:save', data),
   previewImport: () => ipcRenderer.invoke('data:preview-import'),
   confirmImport: token => ipcRenderer.invoke('data:confirm-import', token),
   exportData: () => ipcRenderer.invoke('data:export'),
+  exportNote: (noteId, format) => ipcRenderer.invoke('note:export', noteId, format),
   openExternal: url => ipcRenderer.invoke('app:external', url),
   onCommand(callback) {
     const listener = (_event: Electron.IpcRendererEvent, command: MenuCommand) => callback(command);
