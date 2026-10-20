@@ -22,11 +22,13 @@
 
 适用于 **Windows 10 / 11，Intel 或 AMD 64 位电脑**。
 
-拿到 `MarkNotes-1.0.7-x64-Setup.exe` 后，双击并按提示安装即可，不需要安装 Node.js 或其他开发工具。当前安装包未签名，Windows 可能显示“未知发布者”。
+**[下载 Windows 安装包 v1.0.7](https://github.com/DRayZ007/Ray-/releases/download/v1.0.7/MarkNotes-1.0.7-x64-Setup.exe)** · [查看版本与更新说明](https://github.com/DRayZ007/Ray-/releases)
+
+下载 `MarkNotes-1.0.7-x64-Setup.exe` 后，双击并按提示安装即可，不需要安装 Node.js 或其他开发工具。当前安装包未签名，Windows 可能显示“未知发布者”。
 
 打开软件后，点击左上角 `+` 新建笔记，直接输入标题和正文。点击“文件 → 导出…”选择导出格式；换电脑时，可以先导出 JSON 完整备份，再在新电脑上导入。
 
-本仓库保存源码，不包含安装包；开发者可以按下方命令自行构建。
+安装包和 SHA-256 校验文件放在 GitHub Releases，源码保存在仓库中。普通用户下载安装包即可，开发者也可以按下方命令自行构建。
 
 ### 不安装也能体验
 
