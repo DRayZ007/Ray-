@@ -14,9 +14,9 @@ npm run test:e2e
 npm run dist
 ```
 
-`npm run verify` 运行逻辑、存储、组件和 Electron 测试及生产构建。`npm run pack` 生成免安装目录；`npm run dist` 生成 `release/MarkNotes-1.0.5-x64-Setup.exe`。实际交付结果见 `VALIDATION.md`。
+`npm run verify` 运行逻辑、存储、组件和 Electron 测试及生产构建。`npm run pack` 生成免安装目录；`npm run dist` 生成 `release/MarkNotes-1.0.6-x64-Setup.exe`。实际交付结果见 `VALIDATION.md`。
 
-`resources/icon.svg` 为「青苔手记」唯一母版，采用浅鼠尾草绿、深蓝绿和米白三色，以实心笔记本、折页和钢笔尖表达专业记录工具；圆润底板、无渐变或滤镜。`npm run icons` 生成 PNG、多尺寸 ICO 和 `build/icon-preview.png`。应用左上角使用原始 SVG，窗口、任务栏、安装程序与快捷方式使用配套资源。
+`resources/icon.svg` 为「页间 N」唯一母版，以折叠纸带构成字母 N，使用蓝绿与鼠尾草绿的实心色块、纸白底板表达书写和知识整理；无字体、渐变或滤镜依赖。设计参考 [语雀](https://www.yuque.com/)、[Notion](https://apps.apple.com/us/app/notion-notes-tasks-ai/id1232780281) 和 [Typora](https://typora.io/) 的简洁品牌符号方向，具体路径为本项目绘制。`npm run icons` 生成 PNG、多尺寸 ICO 和 `build/icon-preview.png`。应用左上角使用原始 SVG，窗口、任务栏、安装程序与快捷方式使用配套资源。
 
 ## 独立 HTML 展示
 
